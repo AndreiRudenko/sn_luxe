@@ -20,18 +20,21 @@ class Entity extends Objects {
 
 	public function new( ?_options:EntityOptions ) {
 
+		super( 'entity' );
+
+		name += '.$id';
+
+		components = new ClassList();
+
 		if(_options != null){
 			
-			super( def(_options.name, 'entity') );
-
-			if(_options.name_unique == true){
-				name += '.$id';
+			if(_options.name != null){
+        		name = _options.name;
+				if(_options.name_unique == true){
+					name += '.$id';
+				}
 			}
 			
-			_scene = def(_options.scene, Clay.scene);
-
-			components = new ClassList();
-
 			if(_options.components != null){
 				var _components:Array<Dynamic> = _options.components;
 				for (component in _components) {
@@ -39,19 +42,18 @@ class Entity extends Objects {
 				}
 			}
 
+			if(_options.scene != null){
+				_scene = _options.scene;
+			} else {
+				_scene = Clay.scene;
+			}
+
 
 		} else {
 
-			super( 'entity' );
-
 			_scene = Clay.scene;
 
-			components = new ClassList();
-
-			name += '.$id';
-
 		}
-
 
 		_scene.addEntity(this);
 

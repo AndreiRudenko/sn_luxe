@@ -1,7 +1,8 @@
 package clay;
 
 
-import clay.structural.OrderedMap;
+// import clay.structural.OrderedMap;
+import clay.structural.ProcessorList;
 
 
 class Scene extends Objects {
@@ -13,7 +14,7 @@ class Scene extends Objects {
 	public var entities   	(default, null) : Map<String, Entity>;
 
 	@:allow(clay.Processor)
-	public var processors 	(default, null) : OrderedMap<String, Processor>;
+	public var processors 	(default, null) : ProcessorList;
 
 
 	public function new( ?_name:String='untitled scene' ) {
@@ -22,8 +23,7 @@ class Scene extends Objects {
 
 		entities = new Map<String, Entity>();
 
-		var _map = new Map<String, Processor>();
-		processors = new OrderedMap(_map);
+		processors = new ProcessorList();
 
 	}
 
@@ -54,7 +54,7 @@ class Scene extends Objects {
 	public inline function addProcessor( _processor:Processor ) : Void {
 
 		_processor._scene = this;
-		processors.set( _processor.name, _processor );
+		processors.add( _processor );
 		_processor.updateView();
 
 	}
@@ -62,7 +62,7 @@ class Scene extends Objects {
 	public inline function removeProcessor( _processor:Processor ) : Void {
 
 		_processor._scene = null;
-		processors.remove( _processor.name );
+		processors.remove( _processor );
 		_processor.updateView();
 
 	}
@@ -79,25 +79,42 @@ class Scene extends Objects {
 			return;
 		}
 
-		for (processor in processors) {
+		var processor:Processor = processors.head;
+		while(processor != null) {
 			if(processor.active){
 				processor.onUpdate(dt);
 			}
+			processor = processor.next;
 		}
 
 	}
 
 	inline public function updateProcessorsView() : Void {
 
-		for (processor in processors) {
+		var processor:Processor = processors.head;
+		while(processor != null) {
 			processor.updateView();
+			processor = processor.next;
 		}
+
+	}
+
+	inline public function updateProcessorsPriority() : Void {
+
+		processors.sort();
 
 	}
 	
 	function toString() {
 
-		return 'Scene: $name / ${Lambda.count(entities)} entities / ${Lambda.count(processors)} processors / id: $id';
+		var pcount:Int = 0;
+		var processor:Processor = processors.head;
+		while(processor != null) {
+			pcount++;
+			processor = processor.next;
+		}
+
+		return 'Scene: $name / ${Lambda.count(entities)} entities / ${pcount} processors / id: $id';
 
 	} //toString
 

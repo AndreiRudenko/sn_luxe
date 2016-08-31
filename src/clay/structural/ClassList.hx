@@ -99,27 +99,23 @@ class ClassList {
 		var cn:ClassNode = classes;
 		while (cn != null){
 			if (objectClass == cn.objectClass){
-				c = cn;
-				break;
+
+				if (cn.prev != null) {
+					cn.prev.next = cn.next;
+				}
+
+				if (cn.next != null) {
+					cn.next.prev = cn.prev;
+				}
+
+				if (cn == classes) {
+					classes = cn.next;
+				}
+
+				return true;
 			}
 
 			cn = cn.next;
-		}
-
-		if(c != null){
-			if (c.prev != null) {
-				c.prev.next = c.next;
-			}
-
-			if (c.next != null) {
-				c.next.prev = c.prev;
-			}
-
-			if (c == classes) {
-				classes = c.next;
-			}
-
-			return true;
 		}
 
 		return false;
@@ -130,10 +126,9 @@ class ClassList {
 	inline public function clear() {
 
 		var c:ClassNode = null;
-		var cn:ClassNode = classes;
-		while (cn != null){
-			c = cn;
-			cn = cn.next;
+		while (classes != null){
+			c = classes;
+			classes = classes.next;
 			c.next = null;
 			c.prev = null;
 		}

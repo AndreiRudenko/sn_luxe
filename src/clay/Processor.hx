@@ -11,8 +11,18 @@ class Processor extends Objects {
 
 	public var scene (get, set) : Scene;
 
+	public var priority (default, set) : Int = 0;
+
 	@:allow(clay.Scene)
 	var _scene : Scene;
+
+	@:allow(clay.Scene)
+	@:allow(clay.structural.ProcessorList)
+	var prev : Processor;
+
+	@:allow(clay.Scene)
+	@:allow(clay.structural.ProcessorList)
+	var next : Processor;
 
 	var view : Array<Class<Dynamic>>;
 	var entities : Array<Entity>;
@@ -20,26 +30,31 @@ class Processor extends Objects {
 
 	public function new( ?_options:ProcessorOptions ) {
 
+		super( 'processor' );
+
+		name += '.$id';
+
+		view = [];
+		entities = [];
+
 		if( _options != null ){
 
-			super( def(_options.name, 'processor') );
-
-			if(_options.name_unique == true){
-				name += '.$id';
+			if(_options.name != null){
+				name = _options.name;
+				if(_options.name_unique == true){
+					name += '.$id';
+				}
 			}
 
-			view = def(_options.view, []);
-			
-		} else {
+			if(_options.view != null){
+				view = _options.view;
+			}
 
-			super( 'processor' );
+			if(_options.priority != null){
+				priority = _options.priority;
+			}
 
-			view = [];
-
-			name += '.$id';
 		}
-
-		entities = [];
 
 	}
 
@@ -97,11 +112,11 @@ class Processor extends Objects {
 	function set_scene(otherScene:Scene) : Scene {
 
 		if(_scene != null) {
-			_scene.processors.remove( name );
+			_scene.processors.remove( this );
 		}
 
 		if(otherScene != null) {
-			otherScene.processors.set( name, this );
+			otherScene.processors.add( this );
 		}
 
 		_scene = otherScene;
@@ -112,17 +127,15 @@ class Processor extends Objects {
 
 	}
 
-	override function set_name(value:String) : String {
+	function set_priority(value:Int) : Int {
+
+		priority = value;
 
 		if(_scene != null){
-			_scene.processors.remove( name );
-			name = value;
-			_scene.processors.set( name, this );
-		} else {
-			name = value;
+			_scene.updateProcessorsPriority();
 		}
-		
-		return value;
+
+		return priority;
 
 	}
 
@@ -136,8 +149,8 @@ class Processor extends Objects {
 typedef ProcessorOptions = {
 
 	@:optional var name : String;
-	// @:optional var scene : Scene;
 	@:optional var name_unique : Bool;
+	@:optional var priority : Int;
 	@:optional var view : Array<Class<Dynamic>>;
 
 } //ProcessorOptions

@@ -1,5 +1,5 @@
 ## clay
-Entity component system written in haxe, inspired by many libraries / engines [eskimo](https://github.com/PDeveloper/eskimo), [ash](https://github.com/nadako/Ash-Haxe), [tusk](https://github.com/BlazingMammothGames/tusk), [luxe](https://github.com/underscorediscovery/luxe).
+entity component system written in haxe, inspired by many libraries / engines [eskimo](https://github.com/PDeveloper/eskimo), [ash](https://github.com/nadako/Ash-Haxe), [tusk](https://github.com/BlazingMammothGames/tusk), [luxe](https://github.com/underscorediscovery/luxe).
 
 
 ## example

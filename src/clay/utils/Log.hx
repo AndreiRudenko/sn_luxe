@@ -1,10 +1,13 @@
 package clay.utils;
 
+
 // taken from https://github.com/underscorediscovery/luxe
+
 
 import haxe.io.Path;
 import haxe.macro.Context;
 import haxe.macro.Expr;
+
 
 private enum LogError {
     RequireString(detail:String);
