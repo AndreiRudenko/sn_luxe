@@ -61,11 +61,19 @@ class Entity extends Objects {
 
 	inline public function add<T>( _component:T , _componentClass:Class<Dynamic> = null) : T {
 
+		if(_scene != null){
+			_scene.updateProcessorsView();
+		}
+
 		return components.set(_component, _componentClass);
 
 	}
 
 	inline public function remove<T>( componentClass:Class<T> ) : Bool {
+		
+		if(_scene != null){
+			_scene.updateProcessorsView();
+		}
 
 		return components.remove(componentClass);
 		

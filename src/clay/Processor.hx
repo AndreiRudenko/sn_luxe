@@ -9,9 +9,11 @@ class Processor extends Objects {
 
 	public var active : Bool = true;
 
-	public var scene (get, set) : Scene;
+	public var entities (default, null): Array<Entity>;
 
 	public var priority (default, set) : Int = 0;
+	
+	public var scene (get, set) : Scene;
 
 	@:allow(clay.Scene)
 	var _scene : Scene;
@@ -25,7 +27,6 @@ class Processor extends Objects {
 	var next : Processor;
 
 	var view : Array<Class<Dynamic>>;
-	var entities : Array<Entity>;
 
 
 	public function new( ?_options:ProcessorOptions ) {
