@@ -1,13 +1,18 @@
 package clay;
 
 
+import clay.Objects;
 import clay.utils.Log.*;
+import clay.events.RemoveComponentEvent;
+import clay.events.AddComponentEvent;
 
 
-class Processor extends Objects {
+class Processor extends ID {
 
 
 	public var active : Bool = true;
+
+	public var events (default, null): Events;
 
 	public var entities (default, null): Array<Entity>;
 
@@ -29,11 +34,13 @@ class Processor extends Objects {
 	var view : Array<Class<Dynamic>>;
 
 
-	public function new( ?_options:ProcessorOptions ) {
+	public function new(?_options:ProcessorOptions) {
 
 		super( 'processor' );
 
 		name += '.$id';
+
+		events = new Events();
 
 		view = [];
 		entities = [];
@@ -59,15 +66,65 @@ class Processor extends Objects {
 
 	}
 
+	public function destroy() {
+
+		onDestroy();
+
+		if(_scene != null) {
+			_scene.processors.remove( this );
+			_scene = null;
+		}
+
+		for (e in entities) {
+			_disconnectEntityEvents(e);
+		}
+
+		entities = null;
+		view = null;
+
+		events.destroy();
+		events = null;
+
+	}
+
 	public function onInit():Void {}
 
 	public function onDestroy():Void {}
 
 	public function onUpdate(dt:Float) {}
 
-	public function onRender(){}
+	public function onRender() {}
 
-	public function setView( _view:Array<Class<Dynamic>> ){
+	public function onComponentAdded(component:Dynamic) {
+
+		trace('onComponentAdded: ${Type.getClass(component)}');
+
+	}
+
+	public function onComponentRemoved(component:Dynamic) {
+
+		trace('onComponentRemoved: ${Type.getClass(component)}');
+
+	}
+
+	public function onEntityAdded(entity:Entity) {
+		// trace('entity: ${entity.name} added, from processor: ${name}');
+	}
+
+	public function onEntityRemoved(entity:Entity) {
+		// trace('entity: ${entity.name} removed, from processor: ${name}');
+	}
+
+	public function onEntityInit(entity:Entity) {
+		// trace('entity: ${entity.name} init, from processor: ${name}');
+	}
+
+	public function onEntityDestroy(entity:Entity) {
+		// trace('entity: ${entity.name} destroy, from processor: ${name}');
+	}
+
+
+	public function setView(_view:Array<Class<Dynamic>>) {
 
 		view = _view;
 		updateView();
@@ -77,9 +134,14 @@ class Processor extends Objects {
 	@:allow(clay.Scene)
 	function updateView() : Void {
 
+		// disconnect events
+		for (e in entities) {
+			_disconnectEntityEvents(e);
+		}
+
 		entities.splice(0, entities.length);
 
-		if(_scene == null){
+		if(_scene == null) {
 			return;
 		}
 
@@ -91,16 +153,80 @@ class Processor extends Objects {
 			match = true;
 
 			for (componentClass in view) {
-				if(!entity.has(componentClass)){
+				if(!entity.has(componentClass)) {
 					match = false;
 					break;
 				}
 			}
 
-			if(match){
+			if(match) {
+				_connectEntityEvents(entity);
 				entities.push(entity);
 			}
 		}
+
+		// trace('processor: ${name} updateView, entities: ${entities.length}');
+
+	}
+
+	inline function _connectEntityEvents(entity:Entity) {
+
+		entity.on(Ev.init, onEntityInit);
+		entity.on(Ev.destroy, onEntityDestroy);
+		entity.on(Ev.componentAdded, _componentAdded);
+		entity.on(Ev.componentRemoved, _componentRemoved);
+
+	}
+
+	inline function _disconnectEntityEvents(entity:Entity) {
+
+		entity.off(Ev.init, onEntityInit);
+		entity.off(Ev.destroy, onEntityDestroy);
+		entity.off(Ev.componentAdded, _componentAdded);
+		entity.off(Ev.componentRemoved, _componentRemoved);
+
+	}
+
+	function _componentRemoved(event:RemoveComponentEvent) {
+
+		var componentClass:Class<Dynamic> = Type.getClass(event.component);
+		var _remove:Bool = false;
+
+		for (viewClass in view) {
+			if(viewClass == componentClass){
+				_remove = true;
+				// trace('processor: ${name} has: ${componentClass} component');
+				break;
+			}
+		}
+
+		if(!_remove){
+			return;
+		}
+		
+		var entity:Entity = event.entity;
+		var component:Dynamic = event.component;
+
+		trace('entity: ${entity.name} removed from processor: ${name}');
+
+		onComponentRemoved(component);
+
+		_disconnectEntityEvents(entity);
+		entities.remove(entity);
+
+	}
+
+	function _componentAdded(event:AddComponentEvent) {
+
+		var componentClass:Class<Dynamic> = Type.getClass(event.component);
+
+		for (viewClass in view) {
+			if(viewClass == componentClass){
+				onComponentAdded(event.component);
+				return;
+			}
+		}
+
 
 	}
 

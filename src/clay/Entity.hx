@@ -3,6 +3,8 @@ package clay;
 
 import clay.structural.ClassList;
 import clay.utils.Log.*;
+import clay.events.RemoveComponentEvent;
+import clay.events.AddComponentEvent;
 
 
 class Entity extends Objects {
@@ -10,6 +12,7 @@ class Entity extends Objects {
 
 	public var active : Bool = true;
 
+		/** if the entity is in a scene, this is not null */
 	public var scene (get, set) : Scene;
 
 	@:allow(clay.Scene)
@@ -29,7 +32,7 @@ class Entity extends Objects {
 		if(_options != null){
 			
 			if(_options.name != null){
-        		name = _options.name;
+				name = _options.name;
 				if(_options.name_unique == true){
 					name += '.$id';
 				}
@@ -59,54 +62,144 @@ class Entity extends Objects {
 
 	}
 
-	inline public function add<T>( _component:T , _componentClass:Class<Dynamic> = null) : T {
+	/**
+	 * add a component to the entity.
+	 * 
+	 * @param _component The component object to add.
+	 * @param _componentClass The class of the component. This is only necessary if the component
+	 * extends another component class and you want the framework to treat the component as of
+	 * the base class type. If not set, the class type is determined directly from the component.
+	 * 
+	 * @return A reference to the entity.
+	 */
+	
+	inline public function add<T>( _component:T , _componentClass:Class<Dynamic> = null) : Entity {
+
+		components.set(_component, _componentClass);
 
 		if(_scene != null){
 			_scene.updateProcessorsView();
 		}
 
-		return components.set(_component, _componentClass);
+		emit(Ev.componentAdded, new AddComponentEvent(this, _component));
+
+		return this;
 
 	}
 
-	inline public function remove<T>( componentClass:Class<T> ) : Bool {
+	/**
+	 * add a array of components to the entity.
+	 * 
+	 * @param _component Array of components to add.
+	 * 
+	 * @return A reference to the entity.
+	 */
+	
+	// inline public function addMany<T>( _components:Array<T> ) : Entity {
+
+	// 	for (component in _components) {
+	// 		components.set(component);
+	// 	}
+
+	// 	if(_scene != null){
+	// 		_scene.updateProcessorsView();
+	// 	}
+
+	// 	return this;
+
+	// }
+
+	/**
+	 * remove a component from the entity.
+	 *
+	 * @param _componentClass The class of the component to be removed.
+	 * @return the component, or null if the component doesn't exist in the entity
+	 */
+	
+	inline public function remove<T>( _componentClass:Class<Dynamic> ) : T {
+
+
+		var _removedComponent = components.remove( _componentClass );
+
+		emit(Ev.componentRemoved, new RemoveComponentEvent(this, _removedComponent));
+
+		return _removedComponent;
 		
-		if(_scene != null){
-			_scene.updateProcessorsView();
-		}
+	}
 
-		return components.remove(componentClass);
+	/**
+	 * remove a component from the entity.
+	 *
+	 * @param _componentClasses The array of component classes to be removed.
+	 */
+	
+	// inline public function removeMany( _componentClasses:Array<Class<Dynamic>> ) {
+
+	// 	for (componentClass in _componentClasses) {
+	// 		components.remove( componentClass );
+	// 	}
+
+	// 	emit(Ev.componentRemoved, this);
 		
-	}
+	// }
 
-	inline public function get<T>( componentClass:Class<T> ) : T {
+	/**
+	 * get a component from the entity.
+	 *
+	 * @param _componentClass The class of the component requested.
+	 * @return The component, or null if none was found.
+	 */
+	
+	inline public function get<T>( _componentClass:Class<Dynamic> ) : T {
 
-		return components.get(componentClass);
-
-	}
-
-	inline public function has<T>( componentClass:Class<T> ) : Bool {
-
-		return components.exists(componentClass);
-
-	}
-
-	inline public function clear() {
-
-		components.clear();
+		return components.get( _componentClass );
 
 	}
+	
+	/**
+	 * get a component from the entity.
+	 *
+	 * @param _componentClass The class of the component requested.
+	 * @return The component, or null if none was found.
+	 */
+	
+	inline public function has<T>( _componentClass:Class<T> ) : Bool {
 
+		return components.exists( _componentClass );
+
+	}
+
+	/**
+	 * remove all components from the entity
+	 */
+	
+	// inline public function clear() { // todo send events
+
+	// 	components.clear();
+
+	// 	emit(Ev.componentRemoved, this);
+
+	// }
+
+	/**
+	 * destroy this entity. removes it from the scene if any
+	 */
+	
 	public function destroy() {
 
-		clear();
+		emit(Ev.destroy, this);
+
+		components.clear();
+		// clear();
 
 		if(_scene != null){
 			_scene.removeEntity(this);
 		}
-
+		
 		_scene = null;
 		components = null;
+
+		_emitter_destroy();
 
 	}
 

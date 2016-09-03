@@ -51,7 +51,11 @@ class Scene extends Objects {
 
 	}
 
-	public inline function addProcessor( _processor:Processor ) : Void {
+	public inline function addProcessor( _processor:Processor, ?_priority:Int ) : Void {
+
+		if(_priority != null){
+			_processor.priority = _priority;
+		}
 
 		_processor._scene = this;
 		processors.add( _processor );

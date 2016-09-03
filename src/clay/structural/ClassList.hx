@@ -14,33 +14,33 @@ class ClassList {
 
 	public function new() {}
 
-	public function set<T>(object:T, objectClass:Class<Dynamic> = null) : T {
+	inline public function set<T>(object:T, objectClass:Class<Dynamic> = null) : T {
 
 		if (objectClass == null){
 			objectClass = Type.getClass(object);
 		}
 
 		// Does a object already exist?
-		var cn:ClassNode = classes;
-		while (cn != null){
-			if (objectClass == cn.objectClass){
+		var node:ClassNode = classes;
+		while (node != null){
+			if (objectClass == node.objectClass){
 				// remove object
-				if (cn.prev != null) {
-					cn.prev.next = cn.next;
+				if (node.prev != null) {
+					node.prev.next = node.next;
 				}
 
-				if (cn.next != null) {
-					cn.next.prev = cn.prev;
+				if (node.next != null) {
+					node.next.prev = node.prev;
 				}
 
-				if (cn == classes) {
-					classes = cn.next;
+				if (node == classes) {
+					classes = node.next;
 				}
 
 				break;
 			}
 
-			cn = cn.next;
+			node = node.next;
 		}
 
 		var c:ClassNode = new ClassNode();
@@ -62,15 +62,15 @@ class ClassList {
 
 	}
 
-	public function get<T>(objectClass:Class<Dynamic>) : Dynamic {
+	public function get<T>(objectClass:Class<Dynamic>) : T {
 
-		var cn:ClassNode = classes;
-		while (cn != null){
-			if (objectClass == cn.objectClass){
-				return cn.object;
+		var node:ClassNode = classes;
+		while (node != null){
+			if (objectClass == node.objectClass){
+				return node.object;
 			}
 
-			cn = cn.next;
+			node = node.next;
 		}
 
 		return null;
@@ -79,46 +79,44 @@ class ClassList {
 
 	public function exists<T>(objectClass:Class<Dynamic>) : Bool {
 
-		var cn:ClassNode = classes;
-		while (cn != null){
-			if (objectClass == cn.objectClass){
+		var node:ClassNode = classes;
+		while (node != null){
+			if (objectClass == node.objectClass){
 				return true;
 			}
 
-			cn = cn.next;
+			node = node.next;
 		}
 
 		return false;
 
 	}
 
-	public function remove<T>(objectClass:Class<Dynamic>) : Bool {
+	public function remove<T>(objectClass:Class<Dynamic>) : T {
 
-		var c:ClassNode = null;
+		var node:ClassNode = classes;
+		while (node != null){
+			if (objectClass == node.objectClass){
 
-		var cn:ClassNode = classes;
-		while (cn != null){
-			if (objectClass == cn.objectClass){
-
-				if (cn.prev != null) {
-					cn.prev.next = cn.next;
+				if (node.prev != null) {
+					node.prev.next = node.next;
 				}
 
-				if (cn.next != null) {
-					cn.next.prev = cn.prev;
+				if (node.next != null) {
+					node.next.prev = node.prev;
 				}
 
-				if (cn == classes) {
-					classes = cn.next;
+				if (node == classes) {
+					classes = node.next;
 				}
 
-				return true;
+				return node.object;
 			}
 
-			cn = cn.next;
+			node = node.next;
 		}
 
-		return false;
+		return null;
 
 	}
 
@@ -141,10 +139,10 @@ class ClassList {
 
 		var len:Int = 0;
 
-		var cn:ClassNode = classes;
-		while (cn != null){
+		var node:ClassNode = classes;
+		while (node != null){
 			len++;
-			cn = cn.next;
+			node = node.next;
 		}
 
 		return len;
@@ -155,10 +153,10 @@ class ClassList {
 
 		var _list = []; 
 
-		var cn:ClassNode = classes;
-		while (cn != null){
-			_list.push(cn.objectClass);
-			cn = cn.next;
+		var node:ClassNode = classes;
+		while (node != null){
+			_list.push(node.objectClass);
+			node = node.next;
 		}
 
 		return '[${_list.join(", ")}]';
