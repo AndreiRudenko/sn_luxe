@@ -8,7 +8,7 @@ package clay.structural;
 class ClassList {
 
 
-	var classes:ClassNode;
+	@:noCompletion public var classes:ClassNode;
 	public var length(get, null):Int;
 
 

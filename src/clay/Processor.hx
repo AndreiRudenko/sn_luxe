@@ -3,8 +3,6 @@ package clay;
 
 import clay.Objects;
 import clay.utils.Log.*;
-import clay.events.RemoveComponentEvent;
-import clay.events.AddComponentEvent;
 
 
 class Processor extends ID {
@@ -95,33 +93,17 @@ class Processor extends ID {
 
 	public function onRender() {}
 
-	public function onComponentAdded(component:Dynamic) {
+	public function onComponentAdded(component:Dynamic) {}
 
-		trace('onComponentAdded: ${Type.getClass(component)}');
+	public function onComponentRemoved(component:Dynamic) {}
 
-	}
+	public function onEntityAdded(entity:Entity) {}
 
-	public function onComponentRemoved(component:Dynamic) {
+	public function onEntityRemoved(entity:Entity) {}
 
-		trace('onComponentRemoved: ${Type.getClass(component)}');
+	public function onEntityInit(entity:Entity) {}
 
-	}
-
-	public function onEntityAdded(entity:Entity) {
-		// trace('entity: ${entity.name} added, from processor: ${name}');
-	}
-
-	public function onEntityRemoved(entity:Entity) {
-		// trace('entity: ${entity.name} removed, from processor: ${name}');
-	}
-
-	public function onEntityInit(entity:Entity) {
-		// trace('entity: ${entity.name} init, from processor: ${name}');
-	}
-
-	public function onEntityDestroy(entity:Entity) {
-		// trace('entity: ${entity.name} destroy, from processor: ${name}');
-	}
+	public function onEntityDestroy(entity:Entity) {}
 
 
 	public function setView(_view:Array<Class<Dynamic>>) {
@@ -165,8 +147,6 @@ class Processor extends ID {
 			}
 		}
 
-		// trace('processor: ${name} updateView, entities: ${entities.length}');
-
 	}
 
 	inline function _connectEntityEvents(entity:Entity) {
@@ -187,7 +167,7 @@ class Processor extends ID {
 
 	}
 
-	function _componentRemoved(event:RemoveComponentEvent) {
+	function _componentRemoved(event) {
 
 		var componentClass:Class<Dynamic> = Type.getClass(event.component);
 		var _remove:Bool = false;
@@ -195,7 +175,6 @@ class Processor extends ID {
 		for (viewClass in view) {
 			if(viewClass == componentClass){
 				_remove = true;
-				// trace('processor: ${name} has: ${componentClass} component');
 				break;
 			}
 		}
@@ -207,8 +186,6 @@ class Processor extends ID {
 		var entity:Entity = event.entity;
 		var component:Dynamic = event.component;
 
-		trace('entity: ${entity.name} removed from processor: ${name}');
-
 		onComponentRemoved(component);
 
 		_disconnectEntityEvents(entity);
@@ -216,7 +193,7 @@ class Processor extends ID {
 
 	}
 
-	function _componentAdded(event:AddComponentEvent) {
+	function _componentAdded(event) {
 
 		var componentClass:Class<Dynamic> = Type.getClass(event.component);
 
@@ -226,7 +203,6 @@ class Processor extends ID {
 				return;
 			}
 		}
-
 
 	}
 

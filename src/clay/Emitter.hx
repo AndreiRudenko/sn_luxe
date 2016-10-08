@@ -1,7 +1,5 @@
 package clay;
 
-// taken from https://github.com/underscorediscovery/luxe
-
 import haxe.ds.IntMap;
 import clay.utils.Log._debug;
 import clay.utils.Log._verbose;
@@ -12,176 +10,240 @@ import clay.utils.Log.log;
 @:noCompletion typedef EmitHandler = Dynamic->Void;
 @:noCompletion typedef HandlerList = Array<EmitHandler>;
 
-@:noCompletion private typedef EmitNode<T> = { event : T, handler:EmitHandler #if luxe_emitter_pos, ?pos:haxe.PosInfos #end }
+private class EmitNode {
+
+
+	public var event : Int;
+	public var handler : EmitHandler;
+	public var next : EmitNode;
+	public var prev : EmitNode;
+
+	public function new(){}
+
+
+}
 
 
 /** A simple event emitter, used as a base class for systems that want to handle direct connections to named events */
 
 // @:generic
-class Emitter<ET:Int> {
+class Emitter {
 
-    @:noCompletion public var bindings : IntMap<HandlerList>;
+	@:noCompletion public var bindings : IntMap<HandlerList>;
 
-        //store connections loosely, to find connected locations
-    var connected : List< EmitNode<ET> >;
-        //store the items to remove
-    var _to_remove : List< EmitNode<ET> >;
+		//store connections loosely, to find connected locations
+	var connected : EmitNode;
+		//store the items to remove
+	var toRemove : EmitNode;
 
-        /** create a new emitter instance, for binding functions easily to named events. similar to `Events` */
-    public function new() {
+		/** create a new emitter instance, for binding functions easily to named events. similar to `Events` */
+	public function new() {
 
-        _to_remove = new List();
-        connected = new List();
+		toRemove = null;
+		connected = null;
 
-        bindings = new IntMap<HandlerList>();
+		bindings = new IntMap<HandlerList>();
 
-    } //new
+	} //new
 
-    @:noCompletion public function _emitter_destroy() {
-        while(_to_remove.length > 0) {
-            var _node = _to_remove.pop();
-            _node.event = null;
-            _node.handler = null;
-            _node = null;
-        }
+	inline function setToRemove(_node:EmitNode) {
 
-        while(connected.length > 0) {
-            var _node = connected.pop();
-            _node.event = null;
-            _node.handler = null;
-            _node = null;
-        }
+		// Add to classes doubly linked list.
+		_node.prev = null;
+		_node.next = toRemove;
 
-        _to_remove = null;
-        connected = null;
-        bindings = null;
-    }
+		if (toRemove != null) {
+			toRemove.prev = _node;
+		}
 
-        /** Emit a named event */
-    // @:generic
-    @:noCompletion public function emit<T>( event:ET, ?data:T #if luxe_emitter_pos, ?pos:haxe.PosInfos #end ) {
+		toRemove = _node;
 
-        if(bindings == null) return;
+	}
 
-        _check();
+	inline function setConnected(event:Int, handler:EmitHandler) {
 
-        var _list = bindings.get(event);
-        if(_list != null && _list.length > 0) {
-            for(handler in _list) {
-                #if luxe_emitter_pos _verboser('emit / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
-                handler(data);
-            }
-        }
+		var _node = new EmitNode();
 
-            //needed because handlers
-            //might disconnect listeners
-        _check();
+		_node.event = event;
+		_node.handler = handler;
 
-    } //emit
+		// Add to doubly linked list.
+		_node.prev = null;
+		_node.next = connected;
 
-        /** connect a named event to a handler */
-    // @:generic
-    @:noCompletion public function on<T>(event:ET, handler: T->Void #if luxe_emitter_pos, ?pos:haxe.PosInfos #end ) {
+		if (connected != null) {
+			connected.prev = _node;
+		}
 
-        if(bindings == null) return;
+		connected = _node;
 
-        _check();
+	}
 
-        #if luxe_emitter_pos _verbose('on / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
+	function removeConnected(event:Int, handler:EmitHandler) {
 
-        if(!bindings.exists(event)) {
+		var _node:EmitNode = connected;
+		while (_node != null){
+			if (_node.event == event && _node.handler == handler){
 
-            bindings.set(event, [handler]);
-            connected.push({ handler:handler, event:event #if luxe_emitter_pos, pos:pos #end });
+				if (_node.prev != null) {
+					_node.prev.next = _node.next;
+				}
 
-        } else {
-            var _list = bindings.get(event);
-            if(_list.indexOf(handler) == -1) {
-                _list.push(handler);
-                connected.push({ handler:handler, event:event #if luxe_emitter_pos, pos:pos #end });
-            }
-        }
+				if (_node.next != null) {
+					_node.next.prev = _node.prev;
+				}
 
-    } //on
+				if (_node == connected) {
+					connected = _node.next;
+				}
 
-        /** disconnect a named event and handler. returns true on success, or false if event or handler not found */
-    // @:generic
-    @:noCompletion public function off<T>(event:ET, handler: T->Void #if luxe_emitter_pos, ?pos:haxe.PosInfos #end ) : Bool {
+				return _node;
+			}
 
-        if(bindings == null) return false;
+			_node = _node.next;
+		}
 
-        _check();
+		return null;
 
-        var _success = false;
+	}
 
-        if(bindings.exists(event)) {
+	@:noCompletion public function _emitter_destroy() {
 
-            #if luxe_emitter_pos _verbose('off / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
+		var _node:EmitNode = null;
+		while (toRemove != null){
+			_node = toRemove;
+			toRemove = toRemove.next;
+			_node.handler = null;
+			_node.next = null;
+			_node.prev = null;
+		}
 
-            _to_remove.push({ event:event, handler:handler });
+		while (connected != null){
+			_node = connected;
+			connected = connected.next;
+			_node.handler = null;
+			_node.next = null;
+			_node.prev = null;
+		}
 
-            for(_info in connected) {
-                if(_info.event == event && _info.handler == handler) {
-                    connected.remove(_info);
-                }
-            }
+		toRemove = null;
+		connected = null;
+		bindings = null;
+		
+	}
 
-                //debateable :p
-            _success = true;
+		/** Emit a named event */
+	// @:generic
+	@:noCompletion public function emit<T>( event:Int, ?data:T ) {
 
-        } //if exists
+		if(bindings == null) return;
 
-        return _success;
+		_check();
 
-    } //off
+		var _list = bindings.get(event);
+		if(_list != null && _list.length > 0) {
+			for(handler in _list) {
+				handler(data);
+			}
+		}
 
-    @:noCompletion public function connections( handler:EmitHandler ) {
+			//needed because handlers
+			//might disconnect listeners
+		_check();
 
-        if(connected == null) return null;
+	} //emit
 
-        var _list : Array<EmitNode<ET>> = [];
+		/** connect a named event to a handler */
+	// @:generic
+	@:noCompletion public function on<T>(event:Int, handler: T->Void ) {
 
-        for(_info in connected) {
-            if(_info.handler == handler) {
-                _list.push(_info);
-            }
-        }
+		if(bindings == null) return;
 
-        return _list;
+		_check();
 
-    } //connections
+		#if emitter_pos _verbose('on / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
 
-    var _checking = false;
+		if(!bindings.exists(event)) {
 
-    function _check() {
+			bindings.set(event, [handler]);
+			setConnected( event, handler );
 
-        if(_checking || _to_remove == null) {
-            return;
-        }
+		} else {
+			var _list = bindings.get(event);
+			if(_list.indexOf(handler) == -1) {
+				_list.push(handler);
+				setConnected( event, handler );
+			}
+		}
 
-        _checking = true;
+	} //on
 
-        if(_to_remove.length > 0) {
+		/** disconnect a named event and handler. returns true on success, or false if event or handler not found */
+	// @:generic
+	@:noCompletion public function off<T>(event:Int, handler: T->Void ) : Bool {
 
-            for(_node in _to_remove) {
+		if(bindings == null) return false;
 
-                var _list = bindings.get(_node.event);
-                _list.remove( _node.handler );
+		_check();
 
-                    //clear the event list if there are no bindings
-                if(_list.length == 0) {
-                    bindings.remove(_node.event);
-                }
+		var _success = false;
 
-            } //each node
+		if(bindings.exists(event)) {
 
-            _to_remove = null;
-            _to_remove = new List();
+			setToRemove(removeConnected(event, handler));
 
-        } //_to_remove length > 0
+				//debateable :p
+			_success = true;
 
-        _checking = false;
+		} //if exists
 
-    } //_check
+		return _success;
+
+	} //off
+
+	@:noCompletion public function connections( handler:EmitHandler ) {
+
+		if(connected == null) return null;
+
+		var _list : Array<EmitNode> = [];
+
+		var _node:EmitNode = connected;
+		while (_node != null){
+			if (_node.handler == handler){
+				_list.push(_node);
+			}
+			_node = _node.next;
+		}
+
+		return _list;
+
+	} //connections
+
+	var _checking = false;
+
+	function _check() {
+
+		if(_checking || toRemove == null) {
+			return;
+		}
+
+		_checking = true;
+
+		var _node:EmitNode = toRemove;
+		while (_node != null){
+			var _list = bindings.get(_node.event);
+			_list.remove( _node.handler );
+
+				//clear the event list if there are no bindings
+			if(_list.length == 0) {
+				bindings.remove(_node.event);
+			}
+			_node = _node.next;
+		}
+		toRemove = null;
+
+		_checking = false;
+
+	} //_check
 
 } //Emitter

@@ -16,7 +16,7 @@ class ID {
 } //ID
 
 
-class Objects extends Emitter<Int> {
+class Objects extends Emitter {
 
 
 	public var id (default, null) : String;

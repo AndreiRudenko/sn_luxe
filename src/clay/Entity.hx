@@ -3,8 +3,6 @@ package clay;
 
 import clay.structural.ClassList;
 import clay.utils.Log.*;
-import clay.events.RemoveComponentEvent;
-import clay.events.AddComponentEvent;
 
 
 class Entity extends Objects {
@@ -81,7 +79,7 @@ class Entity extends Objects {
 			_scene.updateProcessorsView();
 		}
 
-		emit(Ev.componentAdded, new AddComponentEvent(this, _component));
+		emit(Ev.componentAdded, {entity : this, component : _component});
 
 		return this;
 
@@ -95,19 +93,23 @@ class Entity extends Objects {
 	 * @return A reference to the entity.
 	 */
 	
-	// inline public function addMany<T>( _components:Array<T> ) : Entity {
+	inline public function addMany<T>( _components:Array<T> ) : Entity {
 
-	// 	for (component in _components) {
-	// 		components.set(component);
-	// 	}
+		for (component in _components) {
+			components.set(component);
+		}
 
-	// 	if(_scene != null){
-	// 		_scene.updateProcessorsView();
-	// 	}
+		if(_scene != null){
+			_scene.updateProcessorsView();
+		}
 
-	// 	return this;
+		for (component in _components) {
+			emit(Ev.componentAdded, {entity : this, component : component});
+		}
 
-	// }
+		return this;
+
+	}
 
 	/**
 	 * remove a component from the entity.
@@ -121,7 +123,7 @@ class Entity extends Objects {
 
 		var _removedComponent = components.remove( _componentClass );
 
-		emit(Ev.componentRemoved, new RemoveComponentEvent(this, _removedComponent));
+		emit(Ev.componentRemoved, {entity : this, component : _removedComponent});
 
 		return _removedComponent;
 		
@@ -133,15 +135,16 @@ class Entity extends Objects {
 	 * @param _componentClasses The array of component classes to be removed.
 	 */
 	
-	// inline public function removeMany( _componentClasses:Array<Class<Dynamic>> ) {
+	inline public function removeMany( _componentClasses:Array<Class<Dynamic>> ) {
 
-	// 	for (componentClass in _componentClasses) {
-	// 		components.remove( componentClass );
-	// 	}
+		var _removedComponent = null;
 
-	// 	emit(Ev.componentRemoved, this);
+		for (componentClass in _componentClasses) {
+			_removedComponent = components.remove( componentClass );
+			emit(Ev.componentRemoved, {entity : this, component : _removedComponent});
+		}
 		
-	// }
+	}
 
 	/**
 	 * get a component from the entity.
@@ -173,13 +176,18 @@ class Entity extends Objects {
 	 * remove all components from the entity
 	 */
 	
-	// inline public function clear() { // todo send events
+	inline public function clear() {
 
-	// 	components.clear();
+		var node = components.classes;
 
-	// 	emit(Ev.componentRemoved, this);
+		while (node != null){
+			emit(Ev.componentRemoved, {entity : this, component : node.object});
+			node = node.next;
+		}
 
-	// }
+		components.clear();
+
+	}
 
 	/**
 	 * destroy this entity. removes it from the scene if any
@@ -189,8 +197,7 @@ class Entity extends Objects {
 
 		emit(Ev.destroy, this);
 
-		components.clear();
-		// clear();
+		clear();
 
 		if(_scene != null){
 			_scene.removeEntity(this);
