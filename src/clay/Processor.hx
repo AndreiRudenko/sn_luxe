@@ -5,19 +5,18 @@ import clay.Objects;
 import clay.utils.Log.*;
 
 
-class Processor extends ID {
+class Processor {
 
 
 	public var active : Bool = true;
 
-	public var events (default, null): Events;
-
-	public var entities (default, null): Array<Entity>;
-
+	public var id       (default, null) : String;
+	public var name     (default, set) : String;
 	public var priority (default, set) : Int = 0;
-	
-	public var scene (get, set) : Scene;
 
+	public var events   (default, null): Events;
+	public var scene    (get, set) : Scene;
+                        
 	@:allow(clay.Scene)
 	var _scene : Scene;
 
@@ -29,37 +28,26 @@ class Processor extends ID {
 	@:allow(clay.structural.ProcessorList)
 	var next : Processor;
 
-	var view : Array<Class<Dynamic>>;
 
+	public function new(_name:String = 'processor', _priority:Int = 0, _opt_scene:Scene = null, name_unique:Bool = false) {
 
-	public function new(?_options:ProcessorOptions) {
+		name = _name;
+		id = clay.utils.Id.uniqueid();
 
-		super( 'processor' );
-
-		name += '.$id';
+		if(name_unique){
+			name += '.$id';
+		}
 
 		events = new Events();
 
-		view = [];
-		entities = [];
+		if(_priority != 0){
+			priority = _priority;
+		}
 
-		if( _options != null ){
-
-			if(_options.name != null){
-				name = _options.name;
-				if(_options.name_unique == true){
-					name += '.$id';
-				}
-			}
-
-			if(_options.view != null){
-				view = _options.view;
-			}
-
-			if(_options.priority != null){
-				priority = _options.priority;
-			}
-
+		if(_opt_scene != null){
+			scene = _opt_scene;
+		} else {
+			// scene = Clay.scene;
 		}
 
 	}
@@ -67,144 +55,17 @@ class Processor extends ID {
 	public function destroy() {
 
 		onDestroy();
-
-		if(_scene != null) {
-			_scene.processors.remove( this );
-			_scene = null;
-		}
-
-		for (e in entities) {
-			_disconnectEntityEvents(e);
-		}
-
-		entities = null;
-		view = null;
-
 		events.destroy();
+
+		scene = null;
 		events = null;
 
 	}
 
-	public function onInit():Void {}
-
-	public function onDestroy():Void {}
-
+	public function onDestroy() {}
 	public function onUpdate(dt:Float) {}
-
 	public function onRender() {}
 
-	public function onComponentAdded(component:Dynamic) {}
-
-	public function onComponentRemoved(component:Dynamic) {}
-
-	public function onEntityAdded(entity:Entity) {}
-
-	public function onEntityRemoved(entity:Entity) {}
-
-	public function onEntityInit(entity:Entity) {}
-
-	public function onEntityDestroy(entity:Entity) {}
-
-
-	public function setView(_view:Array<Class<Dynamic>>) {
-
-		view = _view;
-		updateView();
-
-	}
-
-	@:allow(clay.Scene)
-	function updateView() : Void {
-
-		// disconnect events
-		for (e in entities) {
-			_disconnectEntityEvents(e);
-		}
-
-		entities.splice(0, entities.length);
-
-		if(_scene == null) {
-			return;
-		}
-
-		var sceneEntities:Map<String,Entity> = _scene.entities;
-
-		var match:Bool = true;
-
-		for (entity in sceneEntities) {
-			match = true;
-
-			for (componentClass in view) {
-				if(!entity.has(componentClass)) {
-					match = false;
-					break;
-				}
-			}
-
-			if(match) {
-				_connectEntityEvents(entity);
-				entities.push(entity);
-			}
-		}
-
-	}
-
-	inline function _connectEntityEvents(entity:Entity) {
-
-		entity.on(Ev.init, onEntityInit);
-		entity.on(Ev.destroy, onEntityDestroy);
-		entity.on(Ev.componentAdded, _componentAdded);
-		entity.on(Ev.componentRemoved, _componentRemoved);
-
-	}
-
-	inline function _disconnectEntityEvents(entity:Entity) {
-
-		entity.off(Ev.init, onEntityInit);
-		entity.off(Ev.destroy, onEntityDestroy);
-		entity.off(Ev.componentAdded, _componentAdded);
-		entity.off(Ev.componentRemoved, _componentRemoved);
-
-	}
-
-	function _componentRemoved(event) {
-
-		var componentClass:Class<Dynamic> = Type.getClass(event.component);
-		var _remove:Bool = false;
-
-		for (viewClass in view) {
-			if(viewClass == componentClass){
-				_remove = true;
-				break;
-			}
-		}
-
-		if(!_remove){
-			return;
-		}
-		
-		var entity:Entity = event.entity;
-		var component:Dynamic = event.component;
-
-		onComponentRemoved(component);
-
-		_disconnectEntityEvents(entity);
-		entities.remove(entity);
-
-	}
-
-	function _componentAdded(event) {
-
-		var componentClass:Class<Dynamic> = Type.getClass(event.component);
-
-		for (viewClass in view) {
-			if(viewClass == componentClass){
-				onComponentAdded(event.component);
-				return;
-			}
-		}
-
-	}
 
 	function get_scene() : Scene {
 
@@ -214,19 +75,28 @@ class Processor extends ID {
 
 	function set_scene(otherScene:Scene) : Scene {
 
-		if(_scene != null) {
-			_scene.processors.remove( this );
+		if(otherScene != null){
+			otherScene.addProcessor(this);
+		} else if(_scene != null) {
+			_scene.removeProcessor(this);
 		}
 
-		if(otherScene != null) {
-			otherScene.processors.add( this );
+		return otherScene;
+
+	}
+	
+	function set_name(value:String) : String {
+
+		if(_scene != null){
+			var _sceneTmp:Scene = _scene;
+			_scene.removeProcessor(this);
+			name = value;
+			_sceneTmp.addProcessor(this);
+		} else {
+			name = value;
 		}
-
-		_scene = otherScene;
-
-		updateView();
-
-		return _scene;
+		
+		return value;
 
 	}
 
@@ -244,7 +114,7 @@ class Processor extends ID {
 
 	function toString() {
 		
-		return 'Processor: $name / ${entities.length} entities / id: $id';
+		return 'Processor: $name / id: $id';
 
 	}
 }

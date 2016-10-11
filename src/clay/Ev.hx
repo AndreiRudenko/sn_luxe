@@ -9,5 +9,8 @@ package clay;
 	var destroy  		    	= 3;
 	var componentAdded  		= 4;
 	var componentRemoved  		= 5;
+	var entityDestroy  		    = 6;
+	var entityAdded  		    = 7;
+	var entityRemoved  		    = 8;
 
 } //Ev

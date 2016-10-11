@@ -9,6 +9,8 @@ package ;
 import clay.Entity;
 import clay.Processor;
 import clay.Engine;
+import clay.View;
+import clay.Scene;
 
 
 class ComponentA {
@@ -33,19 +35,44 @@ class ComponentB {
 
 class ProcessorA extends Processor{
 
+	public var entsA:View; // ComponentA
+	public var entsB:View; // ComponentB
+	public var entsC:View; // ComponentA, ComponentB
+
 	public function new(){
-		super({ view : [ComponentA] });
+
+		super("ProcessorA");
+
+		entsA = Clay.scene.getView("entsA");
+		entsB = Clay.scene.getView("entsB");
+		entsC = Clay.scene.getView("entsC");
+
 	}
 
 	override public function onUpdate(dt:Float){
-		for (entity in entities) {
-			if(!entity.active){
-				continue;
-			}
 
-			var component:TestComponent = entity.get(TestComponent);
-			trace('entity: ${entity.name} process: ${component}');
+		for (entity in entsA.entities) {
+
+			var component:ComponentA = entity.get(ComponentA);
+			trace('processor ${name} entity: ${entity.name} process: ${component}');
+
+			for (entity in entsB.entities) {
+
+				var component:ComponentB = entity.get(ComponentB);
+				trace('processor ${name} entity: ${entity.name} process: ${component}');
+
+			}
 		}
+
+		for (entity in entsB.entities) {
+
+			var componentA:ComponentA = entity.get(ComponentA);
+			var componentB:ComponentB = entity.get(ComponentB);
+			trace('processor ${name} entity: ${entity.name} process: ${componentA}');
+			trace('processor ${name} entity: ${entity.name} process: ${componentB}');
+
+		}
+
 	}
 
 }
@@ -56,6 +83,12 @@ class Main {
 
 		var engine:Engine = new Engine();
 
+		engine.scene.addView(new View('entsA', [ComponentA]));
+		engine.scene.addView(new View('entsB', [ComponentB]));
+		engine.scene.addView(new View('entsC', [ComponentA, ComponentB]));
+
+		engine.scene.addProcessor(new ProcessorA());
+
 		var entity1:Entity = new Entity();
 		var entity2:Entity = new Entity();
 
@@ -65,11 +98,8 @@ class Main {
 		entity1.add(component2);
 
 		var component3:ComponentB = new ComponentB(3);
-		entity2.add(component3);
+		entity1.add(component3);
 
-		var processor:ProcessorA = new ProcessorA();
-		engine.scene.addProcessor(processor);
-		
 		engine.update(1/60);
 
 	}

@@ -9,7 +9,7 @@ import clay.Scene;
 import clay.Processor;
 
 
-@:access(clay.Processor)
+// @:access(clay.Processor)
 class ProcessorTest {
 
 
@@ -43,7 +43,7 @@ class ProcessorTest {
 	public function testProcessorNameStoredAndReturned():Void {
 
 		var name:String = "anything";
-		var processor:Processor = new Processor({ name : name });
+		var processor:Processor = new Processor(name);
 		Assert.isTrue(processor.name == "anything");
 
 	}
@@ -52,7 +52,7 @@ class ProcessorTest {
 	public function testProcessorNameUnique():Void {
 
 		var name:String = "anything";
-		var processor:Processor = new Processor({ name : name, name_unique : true });
+		var processor:Processor = new Processor(name, 0, null, true );
 		Assert.isTrue(processor.name == 'anything.${processor.id}');
 
 	}
@@ -60,7 +60,7 @@ class ProcessorTest {
 	@Test
 	public function testProcessorNameCanBeChanged():Void {
 		
-		var processor:Processor = new Processor( { name : "anything"} );
+		var processor:Processor = new Processor( "anything" );
 		processor.name = "otherThing";
 		Assert.isTrue(processor.name == "otherThing");
 
@@ -110,11 +110,28 @@ class ProcessorTest {
 	}
 
 	@Test
+	public function testProcessorCanReplaceOther():Void {
+
+		var scene:Scene = new Scene("scene1");
+
+		var processor1:Processor = new Processor("processor");
+		var processor2:Processor = new Processor("processor");
+
+		scene.addProcessor(processor1);
+		scene.addProcessor(processor2);
+
+		Assert.isTrue(processor1.scene == null); 
+		Assert.isTrue(processor2.scene == scene); 
+		Assert.isTrue(scene.getProcessor("processor") == processor2); 
+
+	}
+
+	@Test
 	public function sceneGetterReturnsAllTheProcessors():Void {
 
-		var processor1:Processor = new Processor();
+		var processor1:Processor = new Processor("processor1");
 		engine.scene.addProcessor(processor1);
-		var processor2:Processor = new Processor();
+		var processor2:Processor = new Processor("processor2");
 		engine.scene.addProcessor(processor2);
 
 		Assert.isTrue(engine.scene.getProcessor(processor1.name) == processor1); 

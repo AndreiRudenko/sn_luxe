@@ -20,11 +20,8 @@ class Engine {
 	}
 
 	public function update(dt:Float) : Void {
-		
-	    Timer.update(dt);
 
 	    scene.update(dt);
-
 
 	}
 

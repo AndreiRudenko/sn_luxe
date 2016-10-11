@@ -1,6 +1,7 @@
 package clay.structural;
 
 
+import clay.structural.GenericListIterator;
 import clay.Processor;
 
 
@@ -13,13 +14,15 @@ class ProcessorList {
     // @:allow(clay.structural)
 	var tail:Processor;
 
+	var _sortingArray:Array<Processor> = [];
+
 
 	public function new(){}
 
 	public function add(processor:Processor):Void {
 
 		// Does a object already exist?
-		var node:Processor = head;
+/*		var node:Processor = head;
 		while (node != null){
 			if (node == processor){
 				// remove object
@@ -43,13 +46,14 @@ class ProcessorList {
 			}
 
 			node = node.next;
-		}
+		}*/
 
 		if (head == null) {
 			head = tail = processor;
 			processor.next = processor.prev = null;
 		} else {
-			node = tail;
+			var node:Processor = tail;
+			// node = tail;
 			while (node != null) {
 				if (node.priority <= processor.priority){
 					break;
@@ -77,7 +81,37 @@ class ProcessorList {
 		}
 	}
 
-	public function remove(processor:Processor) : Void {
+	// public function exist(processor:Processor) : Bool {
+
+	// 	var node:Processor = head;
+	// 	while (node != null){
+	// 		if (node == processor){
+	// 			return true;
+	// 		}
+
+	// 		node = node.next;
+	// 	}
+
+	// 	return false;
+
+	// }
+
+	public function exist(_name:String) : Bool {
+
+		var node:Processor = head;
+		while (node != null){
+			if (node.name == _name){
+				return true;
+			}
+
+			node = node.next;
+		}
+
+		return false;
+
+	}
+
+	public inline function remove(processor:Processor) : Void {
 
 		if (head == processor){
 			head = head.next;
@@ -97,7 +131,7 @@ class ProcessorList {
 
 	}
 
-	public function removeByName(name:String) : Bool {
+/*	public function removeByName(name:String) : Bool {
 
 		var node:Processor = head;
 		while (node != null){
@@ -128,7 +162,7 @@ class ProcessorList {
 
 		return false;
 
-	}
+	}*/
 
 	public function get(name:String) : Processor {
 
@@ -147,17 +181,18 @@ class ProcessorList {
 
 	public function sort() : Void {
 
-		var arr:Array<Processor> = [];
 
 		var node:Processor = head;
 		while (node != null){
-			arr.push(node);
+			_sortingArray.push(node);
 			node = node.next;
 		}
 
-		for (n in arr) {
+		for (n in _sortingArray) {
 			add(n);
 		}
+
+		_sortingArray.splice(0, _sortingArray.length);
 
 	}
 
@@ -188,5 +223,12 @@ class ProcessorList {
 		return '[${_list.join(", ")}]';
 
 	}
+
+	// public inline function iterator():GenericListIterator<Processor> {
+
+	// 	return new GenericListIterator<Processor>(head);
+
+	// }
+	
 
 }

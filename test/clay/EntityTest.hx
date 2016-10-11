@@ -6,9 +6,10 @@ import massive.munit.Assert;
 import clay.Entity;
 import clay.Engine;
 import clay.Scene;
+import clay.Mockups;
 
 
-@:access(clay.Entity)
+// @:access(clay.Entity)
 class EntityTest {
 
 
@@ -38,7 +39,6 @@ class EntityTest {
 		Assert.isTrue(entity.get(MockComponent) == component); 
 
 	}
-
 	@Test
 	public function canStoreAndRetrieveMultipleComponents():Void {
 
@@ -55,9 +55,7 @@ class EntityTest {
 	@Test
 	public function canCreateWithMultipleComponents():Void {
 
-		var entity:Entity = new Entity({
-			components : [new MockComponent(), new MockComponent2()]
-		});
+		var entity:Entity = new Entity('testEntity', [new MockComponent(), new MockComponent2()]);
 
 		Assert.isTrue(entity.has(MockComponent)); 
 		Assert.isTrue(entity.has(MockComponent2)); 
@@ -148,7 +146,7 @@ class EntityTest {
 	public function testEntityNameStoredAndReturned():Void {
 
 		var name:String = "anything";
-		var entity:Entity = new Entity({ name : name });
+		var entity:Entity = new Entity(name, null, null, false);
 		Assert.isTrue(entity.name == "anything");
 
 	}
@@ -157,7 +155,7 @@ class EntityTest {
 	public function testEntityNameUnique():Void {
 
 		var name:String = "anything";
-		var entity:Entity = new Entity({ name : name, name_unique : true });
+		var entity:Entity = new Entity(name, null, null, true );
 		Assert.isTrue(entity.name == 'anything.${entity.id}');
 
 	}
@@ -165,18 +163,19 @@ class EntityTest {
 	@Test
 	public function testEntityNameCanBeChanged():Void {
 		
-		var entity:Entity = new Entity( { name : "anything"} );
+		var entity:Entity = new Entity("anything");
 		entity.name = "otherThing";
 		Assert.isTrue(entity.name == "otherThing");
 
 	}
+
 
 	@Test
 	public function testEntitySetAndReturnScene():Void {
 
 		var scene:Scene = new Scene("scene1");
 
-		var entity:Entity = new Entity( { scene : scene } );
+		var entity:Entity = new Entity( "entity", null, scene );
 		Assert.isTrue(entity.scene == scene);
 		Assert.isTrue(scene.getEntity(entity.name) == entity);
 
@@ -187,7 +186,7 @@ class EntityTest {
 
 		var scene:Scene = new Scene("scene1");
 
-		var entity:Entity = new Entity( { scene : scene } );
+		var entity:Entity = new Entity( "entity", null, scene );
 		entity.scene = null;
 
 		Assert.isTrue(entity.scene == null);
@@ -201,7 +200,7 @@ class EntityTest {
 		var scene:Scene = new Scene("scene1");
 		var scene2:Scene = new Scene("scene2");
 
-		var entity:Entity = new Entity( { scene : scene } );
+		var entity:Entity = new Entity( "entity", null, scene );
 		entity.scene = scene2;
 		Assert.isTrue(entity.scene == scene2);
 		Assert.isTrue(scene.getEntity(entity.name) == null);
@@ -210,11 +209,25 @@ class EntityTest {
 	}
 
 	@Test
+	public function testEntityCanReplaceOther():Void {
+
+		var scene:Scene = new Scene("scene1");
+
+		var entity:Entity = new Entity( "entity", null, scene, false );
+		var entity2:Entity = new Entity( "entity", null, scene, false );
+
+		Assert.isTrue(entity.scene == null);
+		Assert.isTrue(entity2.scene == scene);
+		Assert.isTrue(scene.getEntity("entity") == entity2);
+
+	}
+
+	@Test
 	public function testEntityDestroy():Void {
 
 		var scene:Scene = new Scene("scene1");
 
-		var entity:Entity = new Entity( { scene : scene } );
+		var entity:Entity = new Entity( "entity", null, scene );
 		var entName:String = entity.name;
 		entity.destroy();
 
@@ -223,14 +236,9 @@ class EntityTest {
 	}
 
 
-
-
-
-
-
 }
 
-
+/*
 class MockComponent {
 
 	public var value:Int;
@@ -257,4 +265,4 @@ class MockComponentExtended extends MockComponent {
 		super();
 	}
 
-}
+}*/

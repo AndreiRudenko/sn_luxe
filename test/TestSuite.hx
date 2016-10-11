@@ -1,7 +1,7 @@
 import massive.munit.TestSuite;
 
-import clay.EntityTest;
-import clay.ProcessorTest;
+// import clay.EntityTest;
+// import clay.ProcessorTest;
 
 /**
  * Auto generated Test Suite for MassiveUnit.
@@ -16,6 +16,8 @@ class TestSuite extends massive.munit.TestSuite
 		super();
 
 		add(clay.EntityTest);
+		add(clay.ViewTest);
 		add(clay.ProcessorTest);
+		// add(clay.EventsTest);
 	}
 }

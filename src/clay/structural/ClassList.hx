@@ -120,6 +120,41 @@ class ClassList {
 
 	}
 
+	public inline function removeNode(node:ClassNode) {
+
+		if(node != null){
+
+			if (node.prev != null) {
+				node.prev.next = node.next;
+			}
+
+			if (node.next != null) {
+				node.next.prev = node.prev;
+			}
+
+			if (node == classes) {
+				classes = node.next;
+			}
+
+			node = null;
+			
+		}
+
+	}
+
+	inline public function shift<T>() : T {
+
+		if (classes.next != null) {
+			classes.next.prev = null;
+		}
+
+		var _ret:ClassNode = classes;
+
+		classes = classes.next;
+
+		return _ret.object;
+
+	}
 
 	inline public function clear() {
 
@@ -163,11 +198,17 @@ class ClassList {
 
 	}
 
+	inline public function iterator():Dynamic {
+
+		return new ClassListIterator(classes);
+
+	}
+
 
 }
 
 
-private class ClassNode {
+private class ClassNode { // todo: create pool
 
 
 	public var objectClass : Class<Dynamic>;
@@ -180,3 +221,30 @@ private class ClassNode {
 
 
 }
+
+
+private typedef HasNextClassNode = {
+	var next:ClassNode;
+	var object:Dynamic;
+}
+
+
+private class ClassListIterator {
+
+	private var prev:HasNextClassNode;
+
+	public inline function new(head:ClassNode) {
+		this.prev = {next: head, object : head.object};
+	}
+
+	public inline function hasNext():Bool {
+		return prev.next != null;
+	}
+
+	public inline function next():Dynamic {
+		prev = prev.next;
+		return prev.object;
+	}
+
+}
+
