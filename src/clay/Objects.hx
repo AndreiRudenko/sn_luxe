@@ -3,6 +3,7 @@ package clay;
 
 class ID {
 
+
 	public var id : String;
 	public var name : String = '';
 
@@ -12,6 +13,7 @@ class ID {
 		id = _id == '' ? clay.utils.Id.uniqueid() : _id;
 
 	} //new
+
 
 } //ID
 
@@ -40,3 +42,4 @@ class Objects extends Emitter<Int> {
 
 
 }
+

@@ -4,39 +4,39 @@ package clay;
 import clay.structural.ClassList;
 import clay.utils.Log.*;
 
-class Entity extends Objects {
 
+class Entity extends Emitter<Int> {
+
+	public var id (default, null) : String;
+	public var name (get, set) : String;
+	var _name : String;
 
 	public var active : Bool = true;
 
 		/** if the entity is in a scene, this is not null */
-	public var scene (get, set) : Scene;
 	public var componentsCount (default, null)  : Int = 0;
-
-	@:allow(clay.Scene)
-	var _scene : Scene;
 
 	var components : ClassList;
 
 
-	public function new( _name:String = 'entity', _components:Array<Dynamic> = null, _opt_scene:Scene = null, name_unique:Bool = true) {
+	public function new( _entname:String = 'entity', _components:Array<Dynamic> = null, name_unique:Bool = true) {
 
-		super( _name );
+		super();
+
+		_name = _entname;
+
+		id = clay.utils.Id.uniqueid();
 
 		if(name_unique){
-			name += '.$id';
+			_name += '.$id';
 		}
 
 		components = new ClassList();
 
+		Clay.entities.add(this);
+
 		if(_components != null){
 			addMany(_components);
-		}
-
-		if(_opt_scene != null){
-			scene = _opt_scene;
-		} else {
-			scene = Clay.scene;
 		}
 
 	}
@@ -65,11 +65,9 @@ class Entity extends Objects {
 
 		components.set(_component, _componentClass);
 
-		if(_scene != null){
-			_scene.updateViewsFrom(this);
-		}
+		Clay.views.check(this);
 
-		emit(Ev.componentAdded, {entity : this, component : _component});
+		emit(Ev.componentadded, {entity : this, component : _component, componentClass : _componentClass});
 
 		componentsCount++;
 		
@@ -108,7 +106,7 @@ class Entity extends Objects {
 
 		if(_component != null){
 
-			emit(Ev.componentRemoved, {entity : this, component : _component});
+			emit(Ev.componentremoved, {entity : this, component : _component, componentClass : _componentClass});
 
 			components.remove( _componentClass );
 
@@ -173,7 +171,7 @@ class Entity extends Objects {
 			toRemove = node;
 			node = node.next;
 
-			emit(Ev.componentRemoved, {entity : this, component : toRemove.object});
+			emit(Ev.componentremoved, {entity : this, component : toRemove.object, componentClass : toRemove.objectClass});
 		
 			components.removeNode(toRemove);
 
@@ -188,50 +186,31 @@ class Entity extends Objects {
 	
 	public function destroy() {
 
-		emit(Ev.entityDestroy, this);
+		emit(Ev.entitydestroy, this);
 
 		clear();
 
-		if(_scene != null){
-			_scene.removeEntity(this);
-		}
-		
-		_scene = null;
+		Clay.entities.remove(this);
+
 		components = null;
 
 		_emitter_destroy();
 
 	}
 
-
-	function get_scene() : Scene {
-
-		return _scene;
-
-	}
-
-	function set_scene(otherScene:Scene) : Scene {
+	function get_name() : String {
 		
-		if(otherScene != null){
-			otherScene.addEntity(this);
-		} else if(_scene != null) {
-			_scene.removeEntity(this);
-		}
-
-		return otherScene;
+		return _name;
 
 	}
 
-	override function set_name(value:String) : String {
+	function set_name(value:String) : String {
 
-		if(_scene != null){
-			var _sceneTmp:Scene = _scene;
-			_scene.removeEntity(this);
-			name = value;
-			_sceneTmp.addEntity(this);
-		} else {
-			name = value;
-		}
+		Clay.entities.remove(this);
+
+		_name = value;
+
+		Clay.entities.add(this);
 		
 		return value;
 
@@ -251,15 +230,6 @@ typedef ComponentEvent = {
 
 	var entity : Entity;
 	var component : Dynamic;
+	var componentClass : Class<Dynamic>;
 }
 
-
-typedef EntityOptions = {
-
-	@:optional var name : String;
-	@:optional var scene : Scene;
-	@:optional var no_scene : Bool;
-	@:optional var name_unique : Bool;
-	@:optional var components : Array<Dynamic>;
-
-} //EntityOptions

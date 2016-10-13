@@ -7,10 +7,9 @@ entity component system written in haxe, inspired by many libraries / engines [e
 package ;
 
 import clay.Entity;
-import clay.Processor;
+import clay.System;
 import clay.Engine;
 import clay.View;
-import clay.Scene;
 
 
 class ComponentA {
@@ -33,7 +32,7 @@ class ComponentB {
 
 }
 
-class ProcessorA extends Processor{
+class SystemA extends System{
 
 	public var entsA:View; // ComponentA
 	public var entsB:View; // ComponentB
@@ -41,36 +40,36 @@ class ProcessorA extends Processor{
 
 	public function new(){
 
-		super("ProcessorA");
+		super();
 
-		entsA = Clay.scene.getView("entsA");
-		entsB = Clay.scene.getView("entsB");
-		entsC = Clay.scene.getView("entsC");
+		entsA = Clay.views.get("entsA");
+		entsB = Clay.views.get("entsB");
+		entsC = Clay.views.get("entsC");
 
 	}
 
-	override public function onUpdate(dt:Float){
+	override public function update(dt:Float){
 
 		for (entity in entsA.entities) {
 
 			var component:ComponentA = entity.get(ComponentA);
-			trace('processor ${name} entity: ${entity.name} process: ${component}');
+			trace(component.string);
 
-			for (entity in entsB.entities) {
-
-				var component:ComponentB = entity.get(ComponentB);
-				trace('processor ${name} entity: ${entity.name} process: ${component}');
-
-			}
 		}
 
 		for (entity in entsB.entities) {
 
+			var component:ComponentB = entity.get(ComponentB);
+			trace(component.int);
+
+		}
+
+		for (entity in entsC.entities) {
+
 			var componentA:ComponentA = entity.get(ComponentA);
 			var componentB:ComponentB = entity.get(ComponentB);
-			trace('processor ${name} entity: ${entity.name} process: ${componentA}');
-			trace('processor ${name} entity: ${entity.name} process: ${componentB}');
-
+			trace(componentA.string);
+			trace(componentB.int);
 		}
 
 	}
@@ -83,26 +82,27 @@ class Main {
 
 		var engine:Engine = new Engine();
 
-		engine.scene.addView(new View('entsA', [ComponentA]));
-		engine.scene.addView(new View('entsB', [ComponentB]));
-		engine.scene.addView(new View('entsC', [ComponentA, ComponentB]));
+		engine.views.add(new View('entsA', [ComponentA]));
+		engine.views.add(new View('entsB', [ComponentB]));
+		engine.views.add(new View('entsC', [ComponentA, ComponentB]));
 
-		engine.scene.addProcessor(new ProcessorA());
+		engine.systems.add(new SystemA());
 
-		var entity1:Entity = new Entity();
-		var entity2:Entity = new Entity();
+		var entityA:Entity = new Entity("entityA", null, false);
+		var entityB:Entity = new Entity("entityB", null, false);
 
 		var component1:ComponentA = new ComponentA('hello');
 		var component2:ComponentB = new ComponentB(16);
-		entity1.add(component1);
-		entity1.add(component2);
+		entityA.add(component1);
+		entityA.add(component2);
 
 		var component3:ComponentB = new ComponentB(3);
-		entity1.add(component3);
+		entityB.add(component3);
 
 		engine.update(1/60);
 
 	}
 
 }
+
 ```

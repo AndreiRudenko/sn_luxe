@@ -5,8 +5,7 @@ import massive.munit.Assert;
 
 import clay.Entity;
 import clay.Engine;
-import clay.Scene;
-import clay.Processor;
+import clay.System;
 
 class EventsTest {
 

@@ -20,29 +20,6 @@ class ClassList {
 			objectClass = Type.getClass(object);
 		}
 
-		// Does a object already exist?
-		var node:ClassNode = classes;
-		while (node != null){
-			if (objectClass == node.objectClass){
-				// remove object
-				if (node.prev != null) {
-					node.prev.next = node.next;
-				}
-
-				if (node.next != null) {
-					node.next.prev = node.prev;
-				}
-
-				if (node == classes) {
-					classes = node.next;
-				}
-
-				break;
-			}
-
-			node = node.next;
-		}
-
 		var c:ClassNode = new ClassNode();
 
 		c.objectClass = objectClass;
@@ -77,7 +54,7 @@ class ClassList {
 
 	}
 
-	public function exists<T>(objectClass:Class<Dynamic>) : Bool {
+	public function exists(objectClass:Class<Dynamic>) : Bool {
 
 		var node:ClassNode = classes;
 		while (node != null){
@@ -208,7 +185,7 @@ class ClassList {
 }
 
 
-private class ClassNode { // todo: create pool
+private class ClassNode { // todo: maybe create pool?
 
 
 	public var objectClass : Class<Dynamic>;
@@ -220,12 +197,6 @@ private class ClassNode { // todo: create pool
 	public function new(){}
 
 
-}
-
-
-private typedef HasNextClassNode = {
-	var next:ClassNode;
-	var object:Dynamic;
 }
 
 
@@ -246,5 +217,11 @@ private class ClassListIterator {
 		return prev.object;
 	}
 
+}
+
+
+private typedef HasNextClassNode = {
+	var next:ClassNode;
+	var object:Dynamic;
 }
 

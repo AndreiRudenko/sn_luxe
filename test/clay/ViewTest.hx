@@ -5,12 +5,10 @@ import massive.munit.Assert;
 
 import clay.Entity;
 import clay.Engine;
-import clay.Scene;
 import clay.View;
 import clay.Mockups;
 
 
-// @:access(clay.View)
 class ViewTest {
 
 
@@ -35,7 +33,7 @@ class ViewTest {
 	public function canStoreViewClass():Void {
 
 		var view:View = new View("view", [MockComponent]);
-		Assert.isTrue(view.viewClasses[0] == MockComponent); 
+		Assert.isTrue(view.viewClasses.has(MockComponent)); 
 
 	}
 
@@ -43,7 +41,7 @@ class ViewTest {
 	public function canStoreViewClasses():Void {
 
 		var view:View = new View("view", [MockComponent, MockComponent2]);
-		Assert.isTrue(view.viewClasses[0] == MockComponent && view.viewClasses[1] == MockComponent2); 
+		Assert.isTrue(view.viewClasses.has(MockComponent) && view.viewClasses.has(MockComponent2)); 
 
 	}
 
@@ -51,8 +49,8 @@ class ViewTest {
 	public function canAddViewClass():Void {
 
 		var view:View = new View("view", [MockComponent]);
-		view.addViewClass(MockComponent2);
-		Assert.isTrue(view.hasViewClass(MockComponent) && view.hasViewClass(MockComponent2)); 
+		view.viewClasses.add(MockComponent2);
+		Assert.isTrue(view.viewClasses.has(MockComponent) && view.viewClasses.has(MockComponent2)); 
 
 	}
 
@@ -60,8 +58,8 @@ class ViewTest {
 	public function canChangeViewClass():Void {
 
 		var view:View = new View("view", [MockComponent]);
-		view.setViewClasses([MockComponent2]);
-		Assert.isTrue(view.viewClasses[0] == MockComponent2); 
+		view.viewClasses.set([MockComponent2]);
+		Assert.isTrue(view.viewClasses.has(MockComponent2) && !view.viewClasses.has(MockComponent)); 
 
 	}
 
@@ -69,8 +67,8 @@ class ViewTest {
 	public function canRemoveViewClass():Void {
 
 		var view:View = new View("view", [MockComponent]);
-		view.removeViewClass(MockComponent);
-		Assert.isTrue(!view.hasViewClass(MockComponent)); 
+		view.viewClasses.remove(MockComponent);
+		Assert.isTrue(!view.viewClasses.has(MockComponent)); 
 
 	}
 
@@ -78,7 +76,7 @@ class ViewTest {
 	public function hasViewClass():Void {
 
 		var view:View = new View("view", [MockComponent]);
-		Assert.isTrue(view.hasViewClass(MockComponent)); 
+		Assert.isTrue(view.viewClasses.has(MockComponent)); 
 
 	}
 
@@ -108,49 +106,13 @@ class ViewTest {
 
 	}
 
-	@Test
-	public function testViewSetAndReturnScene():Void {
 
-		var scene:Scene = new Scene("scene1");
-
-		var view:View = new View( "view", [], scene );
-		Assert.isTrue(view.scene == scene);
-		Assert.isTrue(scene.getView(view.name) == view);
-
-	}
-
-	@Test
-	public function testViewSetSceneToNull():Void {
-
-		var scene:Scene = new Scene("scene1");
-
-		var view:View = new View( "view", [], scene );
-		view.scene = null;
-
-		Assert.isTrue(view.scene == null);
-		Assert.isTrue(scene.getView(view.name) == null);
-
-	}
-
-	@Test
-	public function testViewSetChangeAndReturnScene():Void {
-
-		var scene:Scene = new Scene("scene1");
-		var scene2:Scene = new Scene("scene2");
-
-		var view:View = new View( "view", [], scene );
-		view.scene = scene2;
-		Assert.isTrue(view.scene == scene2);
-		Assert.isTrue(scene.getView(view.name) == null);
-		Assert.isTrue(scene2.getView(view.name) == view);
-
-	}
 
 	@Test
 	public function testViewCanAddAndRemoveEntities():Void {
 
 		var view:View = new View( "view", [MockComponent] );
-		engine.scene.addView(view);
+		engine.views.add(view);
 		
 		var entity:Entity = new Entity('ent');
 		entity.add(new MockComponent());
@@ -178,48 +140,13 @@ class ViewTest {
 	}
 
 	@Test
-	public function testViewCanAddEntitiesOnSceneChanged():Void {
-
-		var scene:Scene = new Scene("scene1");
+	public function testViewCanRemoveAndAddEntities():Void {
 
 		var view:View = new View( "view", [MockComponent] );
-		engine.scene.addView(view);
-
-		var entity:Entity = new Entity('ent', null, scene);
-		entity.add(new MockComponent());
-
-		var hasEnt:Bool = false;
-		for (e in view.entities) {
-			if(e == entity){
-				hasEnt = true;
-			}
-		}
-
-		Assert.isFalse(hasEnt);
-
-		view.scene = scene;
+		engine.views.add(view);
 		
-		hasEnt = false;
-		for (e in view.entities) {
-			if(e == entity){
-				hasEnt = true;
-			}
-		}
-
-		Assert.isTrue(hasEnt);
-
-	}
-
-	@Test
-	public function testViewCanRemoveEntitiesOnSceneChanged():Void {
-
-		var scene:Scene = new Scene("scene1");
-
-		var view:View = new View( "view", [MockComponent] );
-		engine.scene.addView(view);
-
-		var entity:Entity = new Entity('ent');
-		entity.add(new MockComponent());
+		var entity:Entity = new Entity('ent', [new MockComponent()]);
+		entity.remove(MockComponent);
 
 		var hasEnt:Bool = false;
 		for (e in view.entities) {
@@ -228,41 +155,10 @@ class ViewTest {
 			}
 		}
 
-		Assert.isTrue(hasEnt);
-
-		view.scene = scene;
-		
-		hasEnt = false;
-		for (e in view.entities) {
-			if(e == entity){
-				hasEnt = true;
-			}
-		}
-
 		Assert.isFalse(hasEnt);
 
-	}
-
-	@Test
-	public function testViewCanRemoveEntitiesOnSceneNull():Void {
-
-		var view:View = new View( "view", [MockComponent] );
-		engine.scene.addView(view);
-
-		var entity:Entity = new Entity('ent');
 		entity.add(new MockComponent());
 
-		var hasEnt:Bool = false;
-		for (e in view.entities) {
-			if(e == entity){
-				hasEnt = true;
-			}
-		}
-
-		Assert.isTrue(hasEnt);
-
-		view.scene = null;
-
 		hasEnt = false;
 		for (e in view.entities) {
 			if(e == entity){
@@ -270,15 +166,15 @@ class ViewTest {
 			}
 		}
 
-		Assert.isFalse(hasEnt);
-
+		Assert.isTrue(hasEnt);
 	}
+
 
 	@Test
 	public function testViewHasEntitiesOnNameChanged():Void {
 
 		var view:View = new View( "view", [MockComponent] );
-		engine.scene.addView(view);
+		engine.views.add(view);
 
 		var entity:Entity = new Entity('ent');
 		entity.add(new MockComponent());
@@ -305,30 +201,30 @@ class ViewTest {
 
 	}
 
+
+
 	@Test
 	public function testViewCanReplaceAnotherView():Void {
 
-		var scene:Scene = new Scene("scene1");
+		var view:View = new View( "view", [] );
+		var view2:View = new View( "view", [] );
+		Clay.views.add(view);
+		Clay.views.add(view2);
 
-		var view:View = new View( "view", [], scene );
-		var view2:View = new View( "view", [], scene );
-
-		Assert.isTrue(view.scene == null);
-		Assert.isTrue(view2.scene == scene);
-		Assert.isTrue(scene.getView("view") == view2);
+		Assert.isTrue(Clay.views.get("view") == view2);
 
 	}
 
 	@Test
 	public function testViewDestroy():Void {
 
-		var scene:Scene = new Scene("scene1");
+		var view:View = new View( "view", [] );
+		Clay.views.add(view);
 
-		var view:View = new View( "view", [], scene );
 		var viewName:String = view.name;
 		view.destroy();
 
-		Assert.isTrue(scene.getEntity(viewName) == null);
+		Assert.isTrue(Clay.views.get(viewName) == null);
 
 	}
 

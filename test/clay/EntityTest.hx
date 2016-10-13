@@ -5,7 +5,7 @@ import massive.munit.Assert;
 
 import clay.Entity;
 import clay.Engine;
-import clay.Scene;
+// import clay.Scene;
 import clay.Mockups;
 
 
@@ -146,7 +146,7 @@ class EntityTest {
 	public function testEntityNameStoredAndReturned():Void {
 
 		var name:String = "anything";
-		var entity:Entity = new Entity(name, null, null, false);
+		var entity:Entity = new Entity(name, null, false);
 		Assert.isTrue(entity.name == "anything");
 
 	}
@@ -155,7 +155,7 @@ class EntityTest {
 	public function testEntityNameUnique():Void {
 
 		var name:String = "anything";
-		var entity:Entity = new Entity(name, null, null, true );
+		var entity:Entity = new Entity(name, null, true );
 		Assert.isTrue(entity.name == 'anything.${entity.id}');
 
 	}
@@ -166,103 +166,31 @@ class EntityTest {
 		var entity:Entity = new Entity("anything");
 		entity.name = "otherThing";
 		Assert.isTrue(entity.name == "otherThing");
-
-	}
-
-
-	@Test
-	public function testEntitySetAndReturnScene():Void {
-
-		var scene:Scene = new Scene("scene1");
-
-		var entity:Entity = new Entity( "entity", null, scene );
-		Assert.isTrue(entity.scene == scene);
-		Assert.isTrue(scene.getEntity(entity.name) == entity);
+		Assert.isTrue(Clay.entities.get("otherThing") != null);
 
 	}
 
 	@Test
-	public function testEntitySetSceneToNull():Void {
+	public function testEntityNameCanReplaceAnother():Void {
+		
+		var entity1:Entity = new Entity("entity", null, false);
+		var entity2:Entity = new Entity("entity", null, false);
 
-		var scene:Scene = new Scene("scene1");
-
-		var entity:Entity = new Entity( "entity", null, scene );
-		entity.scene = null;
-
-		Assert.isTrue(entity.scene == null);
-		Assert.isTrue(scene.getEntity(entity.name) == null);
-
-	}
-
-	@Test
-	public function testEntitySetChangeAndReturnScene():Void {
-
-		var scene:Scene = new Scene("scene1");
-		var scene2:Scene = new Scene("scene2");
-
-		var entity:Entity = new Entity( "entity", null, scene );
-		entity.scene = scene2;
-		Assert.isTrue(entity.scene == scene2);
-		Assert.isTrue(scene.getEntity(entity.name) == null);
-		Assert.isTrue(scene2.getEntity(entity.name) == entity);
-
-	}
-
-	@Test
-	public function testEntityCanReplaceOther():Void {
-
-		var scene:Scene = new Scene("scene1");
-
-		var entity:Entity = new Entity( "entity", null, scene, false );
-		var entity2:Entity = new Entity( "entity", null, scene, false );
-
-		Assert.isTrue(entity.scene == null);
-		Assert.isTrue(entity2.scene == scene);
-		Assert.isTrue(scene.getEntity("entity") == entity2);
+		Assert.isTrue(Clay.entities.get("entity") == entity2);
 
 	}
 
 	@Test
 	public function testEntityDestroy():Void {
 
-		var scene:Scene = new Scene("scene1");
 
-		var entity:Entity = new Entity( "entity", null, scene );
+		var entity:Entity = new Entity( "entity" );
 		var entName:String = entity.name;
 		entity.destroy();
 
-		Assert.isTrue(scene.getEntity(entName) == null);
+		Assert.isTrue(Clay.entities.get(entName) == null);
 
 	}
 
 
 }
-
-/*
-class MockComponent {
-
-	public var value:Int;
-
-	public function new(value:Int = 0) {
-		this.value = value;
-	}
-
-}
-
-class MockComponent2 {
-
-	public var value:String;
-
-	public function new(){}
-
-}
-
-class MockComponentExtended extends MockComponent {
-
-	public var other:Int;
-
-	public function new() {
-		super();
-	}
-
-}*/
