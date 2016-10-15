@@ -3,6 +3,7 @@ package clay;
 
 import clay.Entity;
 import clay.View;
+import clay.utils.Log.*;
 
 
 class ViewManager {
@@ -13,15 +14,19 @@ class ViewManager {
 
 	public function new() {
 
+		_verbose('creating new ViewManager');
+
 		views = new Map();
 
 	}
 
 	public inline function add( _view:View ) : Void {
 
+		_verbose('add view ${_view.name}');
+
 		var _dView:View = views.get(_view.name);
 		if(_dView != null) {
-			trace('ViewManager adding a second view named ${_view.name}!
+			log('adding a second view named ${_view.name}!
 				This will replace the existing one, possibly leaving the previous one in limbo.');
 			remove(_dView);
 		}
@@ -31,6 +36,8 @@ class ViewManager {
 	}
 
 	public inline function remove( _view:View ) : Void {
+
+		_verbose('remove view ${_view.name}');
 
 		views.remove( _view.name );
 
@@ -44,6 +51,8 @@ class ViewManager {
 	
 	public inline function check(_entity:Entity) {
 
+		_verbose('check entity ${_entity.name}');
+
 		for (v in views) {
 			v.check(_entity);
 		}
@@ -51,6 +60,8 @@ class ViewManager {
 	}
 
 	public inline function removeEntity(_entity:Entity) {
+
+		_verbose('remove entity ${_entity.name}');
 
 		for (v in views) {
 			v.removeEntity(_entity);

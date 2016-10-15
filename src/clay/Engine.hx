@@ -6,6 +6,10 @@ import clay.SystemManager;
 import clay.EntityManager;
 import clay.ViewManager;
 
+
+@:keep
+@:noCompletion
+@:log_as('clay')
 class Engine {
 
 
@@ -38,7 +42,15 @@ class Engine {
 
 	public function update(dt:Float) : Void {
 
+		systems.emit(clay.Ev.update, dt);
 		emit(clay.Ev.update, dt);
+
+	}
+
+	public function render() : Void {
+
+		systems.emit(clay.Ev.render);
+		emit(clay.Ev.render);
 
 	}
 
@@ -50,10 +62,9 @@ class Engine {
 		return emitter.off(event, handler);
 	}
 
-	public inline function emit<T>(event:clay.Ev, ?data:T) {
+	public inline function emit<T>(event:clay.Ev, ?data:T ) {
 		return emitter.emit(event, data);
 	}
 
 
 }
-

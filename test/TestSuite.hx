@@ -1,21 +1,23 @@
 import massive.munit.TestSuite;
 
+// import clay.EntityTest;
+// import clay.SystemTest;
 
 /**
  * Auto generated Test Suite for MassiveUnit.
  * Refer to munit command line tool for more information (haxelib run munit)
  */
 
-class TestSuite extends massive.munit.TestSuite {
+class TestSuite extends massive.munit.TestSuite
+{		
 
-
-	public function new() {
+	public function new()
+	{
 		super();
 
 		add(clay.EntityTest);
 		add(clay.ViewTest);
+		// add(clay.SystemTest);
+		// add(clay.EventsTest);
 	}
-	
-
 }
-

@@ -212,7 +212,7 @@ private class ClassListIterator {
 		return prev.next != null;
 	}
 
-	public inline function next():Dynamic {
+	public inline function next():Dynamic { // todo
 		prev = prev.next;
 		return prev.object;
 	}

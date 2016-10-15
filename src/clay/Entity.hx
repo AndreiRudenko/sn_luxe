@@ -2,10 +2,12 @@ package clay;
 
 
 import clay.structural.ClassList;
+import clay.signals.Signal3;
 import clay.utils.Log.*;
 
 
-class Entity extends Emitter<Int> {
+class Entity {
+	
 
 	public var id (default, null) : String;
 	public var name (get, set) : String;
@@ -16,12 +18,15 @@ class Entity extends Emitter<Int> {
 		/** if the entity is in a scene, this is not null */
 	public var componentsCount (default, null)  : Int = 0;
 
+	@:allow(clay.View)
+	var componentAdded : Signal3<Entity, Dynamic, Class<Dynamic>>;
+	@:allow(clay.View)
+	var componentRemoved : Signal3<Entity, Dynamic, Class<Dynamic>>;
+
 	var components : ClassList;
 
 
 	public function new( _entname:String = 'entity', _components:Array<Dynamic> = null, name_unique:Bool = true) {
-
-		super();
 
 		_name = _entname;
 
@@ -31,6 +36,11 @@ class Entity extends Emitter<Int> {
 			_name += '.$id';
 		}
 
+		_verbose('create new entity / ${_name}');
+
+		componentAdded = new Signal3();
+		componentRemoved = new Signal3();
+
 		components = new ClassList();
 
 		Clay.entities.add(this);
@@ -38,6 +48,30 @@ class Entity extends Emitter<Int> {
 		if(_components != null){
 			addMany(_components);
 		}
+
+	}
+
+	/**
+	 * destroy this entity. removes it from the scene if any
+	 */
+	
+	public function destroy() {
+
+		_verbose('destroy entity / ${_name}');
+
+		// emit(Ev.entitydestroy, this); // todo
+
+		clear();
+
+		Clay.entities.remove(this);
+
+		components = null;
+
+		componentAdded.destroy();
+		componentRemoved.destroy();
+
+		componentAdded = null;
+		componentRemoved = null;
 
 	}
 
@@ -54,9 +88,11 @@ class Entity extends Emitter<Int> {
 	
 	public inline function add<T>( _component:T, _componentClass:Class<Dynamic> = null) : Entity {
 
+
 		if(_componentClass == null){
 			_componentClass = Type.getClass(_component);
 		}
+		_verbose('add component ${_componentClass} / to ${_name}');
 
 		// if component exists remove it
 		if(components.exists(_componentClass)){
@@ -67,7 +103,7 @@ class Entity extends Emitter<Int> {
 
 		Clay.views.check(this);
 
-		emit(Ev.componentadded, {entity : this, component : _component, componentClass : _componentClass});
+		// emit(Ev.componentadded, {entity : this, component : _component, componentClass : _componentClass}); // maybe?
 
 		componentsCount++;
 		
@@ -102,11 +138,14 @@ class Entity extends Emitter<Int> {
 	
 	inline public function remove<T>( _componentClass:Class<Dynamic> ) : T {
 
+		_verbose('remove component ${_componentClass} / from ${_name}');
+
 		var _component = components.get( _componentClass );
 
 		if(_component != null){
 
-			emit(Ev.componentremoved, {entity : this, component : _component, componentClass : _componentClass});
+
+			componentRemoved.send(this, _component, _componentClass);
 
 			components.remove( _componentClass );
 
@@ -163,6 +202,7 @@ class Entity extends Emitter<Int> {
 	
 	inline public function clear() {
 
+		_verbose('remove all components / from ${_name}');
 
 		var toRemove = null;
 		var node = components.classes;
@@ -171,30 +211,12 @@ class Entity extends Emitter<Int> {
 			toRemove = node;
 			node = node.next;
 
-			emit(Ev.componentremoved, {entity : this, component : toRemove.object, componentClass : toRemove.objectClass});
+			componentRemoved.send(this, toRemove.object, toRemove.objectClass);
 		
 			components.removeNode(toRemove);
 
 			componentsCount--;
 		}
-
-	}
-
-	/**
-	 * destroy this entity. removes it from the scene if any
-	 */
-	
-	public function destroy() {
-
-		emit(Ev.entitydestroy, this);
-
-		clear();
-
-		Clay.entities.remove(this);
-
-		components = null;
-
-		_emitter_destroy();
 
 	}
 
@@ -205,6 +227,8 @@ class Entity extends Emitter<Int> {
 	}
 
 	function set_name(value:String) : String {
+
+		_verbose('set name ${value}');
 
 		Clay.entities.remove(this);
 

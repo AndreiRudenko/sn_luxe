@@ -2,6 +2,7 @@ package clay;
 
 
 import clay.Entity;
+import clay.utils.Log.*;
 
 
 class EntityManager {
@@ -12,15 +13,19 @@ class EntityManager {
 
 	public function new() {
 
+		_verbose('create new EntityManager');
+
 		entities = new Map();
 
 	}
 
 	public inline function add( _entity:Entity ) : Void {
 
+		_verbose('add entity ${_entity.name}');
+
 		var _dEnt:Entity = entities.get(_entity.name);
 		if(_dEnt != null) {
-			trace('EntityManager adding a second entity named ${_entity.name}!
+			log('adding a second entity named ${_entity.name}!
 				This will replace the existing one, possibly leaving the previous one in limbo.');
 			remove(_dEnt);
 		}
@@ -34,6 +39,8 @@ class EntityManager {
 	}
 
 	public inline function remove( _entity:Entity ) : Void {
+
+		_verbose('remove entity ${_entity.name}');
 
 		entities.remove( _entity.name );
 

@@ -2,8 +2,10 @@ package clay;
 
 
 import clay.Events;
+import clay.utils.Log.*;
 
 
+@:autoBuild(clay.macros.SystemRules.apply())
 class System {
 
 
@@ -17,10 +19,12 @@ class System {
 
 	@:noCompletion public function onRender() {}
 	@:noCompletion public function onDestroy() {}
-	@:noCompletion public function update(dt:Float) {}
+	@:noCompletion public function onUpdate(dt:Float) {}
 
 
 	public function new() {
+
+		_verbose('creating new system / ${Type.getClassName(Type.getClass(this))}');
 
 		events = new Events();
 
@@ -28,19 +32,50 @@ class System {
 
 	public function destroy() {
 
+		_verbose('destroy system / ${Type.getClassName(Type.getClass(this))}');
 		onDestroy();
-		events.destroy();
 
+		Clay.systems.remove(this);
+
+		events.destroy();
 		events = null;
 
 	}
 
 
+	function _update(dt:Float) {
+
+        _verboser('calling update on ${Type.getClassName(Type.getClass(this))}');
+		onUpdate(dt);
+
+	}
+
+	function _render(_) {
+
+        _verboser('calling render on ${Type.getClassName(Type.getClass(this))}');
+		onRender();
+
+	}
+
+	function _destroy(_) {
+
+        _verboser('calling destroy on ${Type.getClassName(Type.getClass(this))}');
+		onDestroy();
+
+	}
+
+	@:allow(clay.SystemManager)
+	function _listenEmitter() {}
+	@:allow(clay.SystemManager)
+	function _unlistenEmitter() {}
+
 	function set_priority(value:Int) : Int {
+		
+        _verbose('set priority on ${Type.getClassName(Type.getClass(this))} / to : ${value}');
 
 		priority = value;
 
-		Clay.systems.updatePriority();
+		Clay.systems.update(this);
 
 		return priority;
 
@@ -48,4 +83,3 @@ class System {
 
 
 }
-

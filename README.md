@@ -48,7 +48,7 @@ class SystemA extends System{
 
 	}
 
-	override public function update(dt:Float){
+	override public function onUpdate(dt:Float){
 
 		for (entity in entsA.entities) {
 

@@ -8,28 +8,22 @@ import clay.System;
 class SystemList {
 
 
-    // @:allow(clay.Scene)
-    @:allow(clay.SystemManager)
 	var head:System;
-
-    // @:allow(clay.structural)
 	var tail:System;
-
-	var _sortingArray:Array<System> = [];
 
 
 	public function new(){}
 
-	public function add(processor:System):Void {
+	public function add(system:System):Void {
 
 		if (head == null) {
-			head = tail = processor;
-			processor.next = processor.prev = null;
+			head = tail = system;
+			system.next = system.prev = null;
 		} else {
 			var node:System = tail;
 			// node = tail;
 			while (node != null) {
-				if (node.priority <= processor.priority){
+				if (node.priority <= system.priority){
 					break;
 				}
 
@@ -37,20 +31,20 @@ class SystemList {
 			}
 
 			if (node == tail) {
-				tail.next = processor;
-				processor.prev = tail;
-				processor.next = null;
-				tail = processor;
+				tail.next = system;
+				system.prev = tail;
+				system.next = null;
+				tail = system;
 			} else if (node == null) {
-				processor.next = head;
-				processor.prev = null;
-				head.prev = processor;
-				head = processor;
+				system.next = head;
+				system.prev = null;
+				head.prev = system;
+				head = system;
 			} else {
-				processor.next = node.next;
-				processor.prev = node;
-				node.next.prev = processor;
-				node.next = processor;
+				system.next = node.next;
+				system.prev = node;
+				node.next.prev = system;
+				node.next = system;
 			}
 		}
 		
@@ -71,7 +65,7 @@ class SystemList {
 
 	}
 
-	public function get(systemClass:Class<Dynamic>) : System {
+	public function get(systemClass:Class<Dynamic>):System {
 
 		var node:System = head;
 		while (node != null){
@@ -86,28 +80,36 @@ class SystemList {
 
 	}
 
-	public inline function remove(processor:System) : Void {
+	public inline function remove(system:System) : Void {
 
-		if (head == processor){
+		if (head == system){
 			head = head.next;
 		}
 
-		if (tail == processor){
+		if (tail == system){
 			tail = tail.prev;
 		}
 
-		if (processor.prev != null){
-			processor.prev.next = processor.next;
+		if (system.prev != null){
+			system.prev.next = system.next;
 		}
 
-		if (processor.next != null){
-			processor.next.prev = processor.prev;
+		if (system.next != null){
+			system.next.prev = system.prev;
 		}
 
 	}
 
-	public function sort() : Void {
+	public inline function update(system:System) : Void {
 
+		remove(system);
+		add(system);
+
+	}
+
+	public function updateAll() : Void {
+
+		var _sortingArray:Array<System> = [];
 
 		var node:System = head;
 		while (node != null){
@@ -121,18 +123,16 @@ class SystemList {
 			add(n);
 		}
 
-		_sortingArray.splice(0, _sortingArray.length);
-
 	}
 
 	public function clear() : Void {
 
-		var processor:System = null;
+		var system:System = null;
 		while (head != null) {
-			processor = head;
+			system = head;
 			head = head.next;
-			processor.prev = null;
-			processor.next = null;
+			system.prev = null;
+			system.next = null;
 		}
 
 		tail = null;
