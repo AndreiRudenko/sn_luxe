@@ -1,4 +1,4 @@
-package clay.signals;
+package clay.macros;
 
 #if macro
 

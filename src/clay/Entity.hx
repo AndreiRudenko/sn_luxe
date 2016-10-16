@@ -3,30 +3,37 @@ package clay;
 
 import clay.structural.ClassList;
 import clay.signals.Signal3;
+import clay.signals.Signal1;
 import clay.utils.Log.*;
 
 
 class Entity {
 	
 
-	public var id (default, null) : String;
-	public var name (get, set) : String;
-	var _name : String;
-
 	public var active : Bool = true;
 
-		/** if the entity is in a scene, this is not null */
+	public var id (default, null) : String;
+	public var name (get, set) : String;
 	public var componentsCount (default, null)  : Int = 0;
+	public var components (get, null): Iterator<Dynamic>;
+
+	var _name : String;
+	var _components : ClassList;
+
+	// signals
+	@:allow(clay.View)
+	@:allow(clay.EntityManager)
+	var componentAdded : Signal3<Entity, Dynamic, Class<Dynamic>>;
 
 	@:allow(clay.View)
-	var componentAdded : Signal3<Entity, Dynamic, Class<Dynamic>>;
-	@:allow(clay.View)
+	@:allow(clay.EntityManager)
 	var componentRemoved : Signal3<Entity, Dynamic, Class<Dynamic>>;
 
-	var components : ClassList;
+	@:allow(clay.EntityManager)
+	var entityDestroyed : Signal1<Entity>;
 
 
-	public function new( _entname:String = 'entity', _components:Array<Dynamic> = null, name_unique:Bool = true) {
+	public function new( _entname:String = 'entity', _aComponents:Array<Dynamic> = null, name_unique:Bool = true) {
 
 		_name = _entname;
 
@@ -40,13 +47,14 @@ class Entity {
 
 		componentAdded = new Signal3();
 		componentRemoved = new Signal3();
+		entityDestroyed = new Signal1();
 
-		components = new ClassList();
+		_components = new ClassList();
 
 		Clay.entities.add(this);
 
-		if(_components != null){
-			addMany(_components);
+		if(_aComponents != null){
+			addMany(_aComponents);
 		}
 
 	}
@@ -59,17 +67,19 @@ class Entity {
 
 		_verbose('destroy entity / ${_name}');
 
-		// emit(Ev.entitydestroy, this); // todo
+		entityDestroyed.send(this);
 
 		clear();
 
 		Clay.entities.remove(this);
 
-		components = null;
+		_components = null;
 
+		entityDestroyed.destroy();
 		componentAdded.destroy();
 		componentRemoved.destroy();
 
+		entityDestroyed = null;
 		componentAdded = null;
 		componentRemoved = null;
 
@@ -95,15 +105,13 @@ class Entity {
 		_verbose('add component ${_componentClass} / to ${_name}');
 
 		// if component exists remove it
-		if(components.exists(_componentClass)){
+		if(_components.exists(_componentClass)){
 			remove(_componentClass);
 		}
 
-		components.set(_component, _componentClass);
+		_components.add(_component, _componentClass);
 
-		Clay.views.check(this);
-
-		// emit(Ev.componentadded, {entity : this, component : _component, componentClass : _componentClass}); // maybe?
+		componentAdded.send(this, _component, _componentClass);
 
 		componentsCount++;
 		
@@ -112,16 +120,16 @@ class Entity {
 	}
 
 	/**
-	 * add a array of components to the entity.
+	 * add a array of _components to the entity.
 	 * 
-	 * @param _components Array of components to add.
+	 * @param _components Array of _components to add.
 	 * 
 	 * @return A reference to the entity.
 	 */
 	
-	public inline function addMany<T>( _components:Array<T> ) : Entity {
+	public inline function addMany<T>( _aComponents:Array<T> ) : Entity {
 
-		for (component in _components) {
+		for (component in _aComponents) {
 			add(component);
 		}
 
@@ -140,14 +148,14 @@ class Entity {
 
 		_verbose('remove component ${_componentClass} / from ${_name}');
 
-		var _component = components.get( _componentClass );
+		var _component = _components.get( _componentClass );
 
 		if(_component != null){
 
 
 			componentRemoved.send(this, _component, _componentClass);
 
-			components.remove( _componentClass );
+			_components.remove( _componentClass );
 
 			componentsCount--;
 		}
@@ -179,7 +187,7 @@ class Entity {
 	
 	inline public function get<T>( _componentClass:Class<Dynamic> ) : T {
 
-		return components.get( _componentClass );
+		return _components.get( _componentClass );
 
 	}
 	
@@ -192,20 +200,20 @@ class Entity {
 	
 	inline public function has<T>( _componentClass:Class<T> ) : Bool {
 
-		return components.exists( _componentClass );
+		return _components.exists( _componentClass );
 
 	}
 
 	/**
-	 * remove all components from the entity
+	 * remove all _components from the entity
 	 */
 	
 	inline public function clear() {
 
-		_verbose('remove all components / from ${_name}');
+		_verbose('remove all _components / from ${_name}');
 
 		var toRemove = null;
-		var node = components.classes;
+		var node = _components.head;
 		while (node != null){
 
 			toRemove = node;
@@ -213,7 +221,7 @@ class Entity {
 
 			componentRemoved.send(this, toRemove.object, toRemove.objectClass);
 		
-			components.removeNode(toRemove);
+			_components.removeNode(toRemove);
 
 			componentsCount--;
 		}
@@ -240,20 +248,17 @@ class Entity {
 
 	}
 
+	function get_components():Iterator<Dynamic> {
+
+		return _components.iterator();
+
+	}
+
 	function toString() {
 		
-		return 'Entity: $name / ${components.length} components:${components} / id: $id';
+		return 'Entity: $name / ${_components.length} _components:${_components} / id: $id';
 
 	}
 
 
 }
-
-
-typedef ComponentEvent = {
-
-	var entity : Entity;
-	var component : Dynamic;
-	var componentClass : Class<Dynamic>;
-}
-

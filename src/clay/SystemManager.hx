@@ -4,14 +4,11 @@ package clay;
 import clay.utils.Log.*;
 
 import clay.structural.SystemList;
-import clay.structural.GenericListIterator;
-import clay.SystemEmitter;
 
 
 class SystemManager {
 
 
-	var emitter : SystemEmitter<clay.Ev>;
 	var systemList : SystemList;
 
 
@@ -20,22 +17,21 @@ class SystemManager {
 		_verbose('create new SystemManager');
 
 		systemList = new SystemList();
-		emitter = new SystemEmitter();
 
 	}
 
+	/* destroy SystemManager */
 	public function destroy() {
 
 		_verbose('destroy SystemManager');
 
-		emitter._emitter_destroy();
 		empty();
 
-		emitter = null;
 		systemList = null;
 
 	}
 
+	/* add system to SystemManager */
 	public inline function add(_system:System, ?_priority:Int) {
 
 		_verbose('add system ${Type.getClassName(Type.getClass(_system))}');
@@ -55,18 +51,21 @@ class SystemManager {
 
 	}
 
+	/* check for system in SystemManager */
 	public inline function has(_systemClass:Class<Dynamic>) : Bool {
 
 		return systemList.exists(_systemClass);
 
 	}
 
+	/* get system from SystemManager */
 	public inline function get(_systemClass:Class<System> ) {
 
 		return systemList.get(_systemClass);
 
 	}
 
+	/* remove system from SystemManager */
 	public inline function remove( _system:System) : Void {
 
 
@@ -83,6 +82,7 @@ class SystemManager {
 
 	}
 
+	/* remove all systems from list */
 	public inline function empty() {
 
 		_verbose('remove all systems');
@@ -95,25 +95,7 @@ class SystemManager {
 
 	}
 
-	public inline function on<T>(event:clay.Ev, handler:T->Void, _system:System  ) {
-
-		emitter.on(event, handler, _system);
-
-	}
-
-	public inline function off<T>(event:clay.Ev, handler:T->Void ) {
-
-		return emitter.off(event, handler);
-
-	}
-
-	public inline function emit<T>(event:clay.Ev, ?data:T ) {
-
-		return emitter.emit(event, data);
-
-	}
-
-	// update system priority
+	/* update system priority */
 	@:allow(clay.System)
 	inline function update(_system:System) {
 

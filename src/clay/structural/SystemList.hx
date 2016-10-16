@@ -8,20 +8,20 @@ import clay.System;
 class SystemList {
 
 
-	var head:System;
-	var tail:System;
+	public var head (default, null) : System;
+	public var tail (default, null) : System;
 
+	public var length(default, null):Int = 0;
 
 	public function new(){}
 
-	public function add(system:System):Void {
+	public inline function add(system:System):Void {
 
 		if (head == null) {
 			head = tail = system;
 			system.next = system.prev = null;
 		} else {
 			var node:System = tail;
-			// node = tail;
 			while (node != null) {
 				if (node.priority <= system.priority){
 					break;
@@ -47,47 +47,59 @@ class SystemList {
 				node.next = system;
 			}
 		}
-		
+
+		length++;
+
 	}
 
-	public function exists(systemClass:Class<Dynamic>) : Bool {
+	public inline function exists(systemClass:Class<Dynamic>) : Bool {
+
+		var ret:Bool = false;
 
 		var node:System = head;
 		while (node != null){
 			if (Type.getClass(node) == systemClass){
-				return true;
+				ret = true;
 			}
 
 			node = node.next;
 		}
 
-		return false;
+		return ret;
 
 	}
 
-	public function get(systemClass:Class<Dynamic>):System {
+	public inline function get(systemClass:Class<Dynamic>):System { 
+
+		var ret:System = null;
 
 		var node:System = head;
 		while (node != null){
 			if (Type.getClass(node) == systemClass){
-				return node;
+				ret = node;
 			}
 
 			node = node.next;
 		}
 
-		return null;
+		return ret;
 
 	}
 
 	public inline function remove(system:System) : Void {
 
-		if (head == system){
+		if (system == head){
 			head = head.next;
-		}
-
-		if (tail == system){
+			
+			if (head == null) {
+				tail = null;
+			}
+		} else if (system == tail) {
 			tail = tail.prev;
+				
+			if (tail == null) {
+				head = null;
+			}
 		}
 
 		if (system.prev != null){
@@ -97,6 +109,10 @@ class SystemList {
 		if (system.next != null){
 			system.next.prev = system.prev;
 		}
+
+		system.next = system.prev = null;
+
+		length--;
 
 	}
 
@@ -136,6 +152,8 @@ class SystemList {
 		}
 
 		tail = null;
+		
+		length = 0;
 
 	}
 

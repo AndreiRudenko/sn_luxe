@@ -1,10 +1,12 @@
 package clay;
 
-import clay.Emitter;
+import clay.signals.Emitter;
 import clay.Events;
-import clay.SystemManager;
 import clay.EntityManager;
+import clay.SystemManager;
 import clay.ViewManager;
+import clay.signals.Signal0;
+import clay.signals.Signal1;
 
 
 @:keep
@@ -42,20 +44,19 @@ class Engine {
 
 	public function update(dt:Float) : Void {
 
-		systems.emit(clay.Ev.update, dt);
 		emit(clay.Ev.update, dt);
 
 	}
 
 	public function render() : Void {
 
-		systems.emit(clay.Ev.render);
 		emit(clay.Ev.render);
 
 	}
 
-	public inline function on<T>(event:clay.Ev, handler:T->Void ) {
-		emitter.on(event, handler);
+	// emitter
+	public inline function on<T>(event:clay.Ev, handler:T->Void, order:Int = 0) {
+		emitter.on(event, handler, order);
 	}
 
 	public inline function off<T>(event:clay.Ev, handler:T->Void ) {
@@ -65,6 +66,11 @@ class Engine {
 	public inline function emit<T>(event:clay.Ev, ?data:T ) {
 		return emitter.emit(event, data);
 	}
+
+	public inline function updateOrder<T>(event:clay.Ev, handler:T->Void, order:Int) {
+		return emitter.update(event, handler, order);
+	}
+
 
 
 }

@@ -1,171 +1,152 @@
 package clay.structural;
 
-/**
- *  @author Andrei Rudenko
- */
+
+import clay.utils.Log.assert;
 
 
 class ClassList {
 
 
-	@:noCompletion public var classes:ClassNode;
-	public var length(get, null):Int;
+	public var head (default, null) : ClNode;
+	public var tail (default, null) : ClNode;
+
+	public var length(default, null):Int = 0;
 
 
 	public function new() {}
 
-	inline public function set<T>(object:T, objectClass:Class<Dynamic> = null) : T {
+	public inline function add<T>(_object:T, _objectClass:Class<Dynamic>) : ClNode {
 
-		if (objectClass == null){
-			objectClass = Type.getClass(object);
+		var node = new ClNode(_object, _objectClass);
+
+		node.next = head;
+		if (head != null){
+			head.prev = node;
+		} else {
+			tail = node;
 		}
 
-		var c:ClassNode = new ClassNode();
+		head = node;
+		
+		length++;
 
-		c.objectClass = objectClass;
-		c.object = object;
-
-		// Add to classes doubly linked list.
-		c.prev = null;
-		c.next = classes;
-
-		if (classes != null) {
-			classes.prev = c;
-		}
-
-		classes = c;
-
-		return c.object;
+		return node;
 
 	}
 
-	public function get<T>(objectClass:Class<Dynamic>) : T {
+	public function remove(objectClass:Class<Dynamic>):Bool{
 
-		var node:ClassNode = classes;
-		while (node != null){
-			if (objectClass == node.objectClass){
-				return node.object;
-			}
+		var node = getNode(objectClass);
 
-			node = node.next;
-		}
-
-		return null;
-
-	}
-
-	public function exists(objectClass:Class<Dynamic>) : Bool {
-
-		var node:ClassNode = classes;
-		while (node != null){
-			if (objectClass == node.objectClass){
-				return true;
-			}
-
-			node = node.next;
+		if(node != null){
+			removeNode(node);
+			return true;
 		}
 
 		return false;
 
 	}
 
-	public function remove<T>(objectClass:Class<Dynamic>) : T {
+	public inline function exists(objectClass:Class<Dynamic>) : Bool {
 
-		var node:ClassNode = classes;
-		while (node != null){
-			if (objectClass == node.objectClass){
+		return getNode(objectClass) != null;
 
-				if (node.prev != null) {
-					node.prev.next = node.next;
-				}
+	}
+	
+	public function get<T>(objectClass:Class<Dynamic>) : T {
 
-				if (node.next != null) {
-					node.next.prev = node.prev;
-				}
+		var node = getNode(objectClass);
 
-				if (node == classes) {
-					classes = node.next;
-				}
-
-				return node.object;
-			}
-
-			node = node.next;
+		if(node != null){
+			return node.object;
 		}
 
 		return null;
 
+	}	
+
+	public inline function getNode(objectClass:Class<Dynamic>) : ClNode {
+
+		var _ret:ClNode = null;
+
+		var len = length;
+
+		var nodeHead = head;
+		var nodeTail = tail;
+
+		while(len > 0) {
+
+			if(nodeHead.objectClass == objectClass){
+				_ret = nodeHead;
+				break;
+			} else if(nodeTail.objectClass == objectClass){
+				_ret = nodeTail;
+				break;
+			}
+
+			nodeHead = nodeHead.next;
+			nodeTail = nodeTail.prev;
+
+			len -= 2;
+		}
+
+		return _ret;
+
 	}
 
-	public inline function removeNode(node:ClassNode) {
-
-		if(node != null){
-
-			if (node.prev != null) {
-				node.prev.next = node.next;
-			}
-
-			if (node.next != null) {
-				node.next.prev = node.prev;
-			}
-
-			if (node == classes) {
-				classes = node.next;
-			}
-
-			node = null;
+	public inline function removeNode(node:ClNode) {
+		
+		if (node == head){
+			head = head.next;
 			
+			if (head == null) {
+				tail = null;
+			}
+		} else if (node == tail) {
+			tail = tail.prev;
+				
+			if (tail == null) {
+				head = null;
+			}
 		}
+
+		if (node.prev != null) {
+			node.prev.next = node.next;
+		}
+		if (node.next != null) {
+			node.next.prev = node.prev;
+		}
+
+		node.next = node.prev = null;
+
+		length--;
 
 	}
 
-	inline public function shift<T>() : T {
+	public inline function clear(gc:Bool = true){
 
-		if (classes.next != null) {
-			classes.next.prev = null;
+		var node = head;
+		var next = null;
+		for (i in 0...length) {
+
+			next = node.next;
+
+			node.prev = null;
+			node.next = null;
+
+			node = next;
 		}
-
-		var _ret:ClassNode = classes;
-
-		classes = classes.next;
-
-		return _ret.object;
-
-	}
-
-	inline public function clear() {
-
-		var c:ClassNode = null;
-		while (classes != null){
-			c = classes;
-			classes = classes.next;
-			c.next = null;
-			c.prev = null;
-		}
-
-		classes = null;
-
-	}
-
-	inline function get_length():Int {
-
-		var len:Int = 0;
-
-		var node:ClassNode = classes;
-		while (node != null){
-			len++;
-			node = node.next;
-		}
-
-		return len;
-
+		
+		head = tail = null;
+		length = 0;
+		
 	}
 
 	inline function toString() {
 
 		var _list = []; 
 
-		var node:ClassNode = classes;
+		var node = head;
 		while (node != null){
 			_list.push(node.objectClass);
 			node = node.next;
@@ -175,9 +156,9 @@ class ClassList {
 
 	}
 
-	inline public function iterator():Dynamic {
+	public inline function iterator():Dynamic {
 
-		return new ClassListIterator(classes);
+		return new ClassListIterator(head);
 
 	}
 
@@ -185,16 +166,25 @@ class ClassList {
 }
 
 
-private class ClassNode { // todo: maybe create pool?
+private class ClNode {
 
 
 	public var objectClass : Class<Dynamic>;
 	public var object : Dynamic;
-	public var next : ClassNode;
-	public var prev : ClassNode;
+	public var next : ClNode;
+	public var prev : ClNode;
 
 
-	public function new(){}
+	public function new(_object:Dynamic, _objectClass:Class<Dynamic>){
+		
+		object = _object;
+		objectClass = _objectClass;
+
+		if(objectClass == null){
+			objectClass = Type.getClass(object);
+		}
+
+	}
 
 
 }
@@ -202,26 +192,33 @@ private class ClassNode { // todo: maybe create pool?
 
 private class ClassListIterator {
 
-	private var prev:HasNextClassNode;
 
-	public inline function new(head:ClassNode) {
-		this.prev = {next: head, object : head.object};
+	var node:ClINode;
+	
+
+	public function new(head:ClINode){
+
+		node = head;
+
 	}
 
 	public inline function hasNext():Bool {
-		return prev.next != null;
-	}
 
-	public inline function next():Dynamic { // todo
-		prev = prev.next;
-		return prev.object;
-	}
+		return node != null;
 
+	}
+	
+	public inline function next():Dynamic {
+
+		var _object = node.object;
+		node = node.next;
+		return _object;
+
+	}
+	
 }
 
-
-private typedef HasNextClassNode = {
-	var next:ClassNode;
+private typedef ClINode = {
+	var next:ClINode;
 	var object:Dynamic;
 }
-

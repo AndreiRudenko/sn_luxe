@@ -19,6 +19,7 @@ class EntityManager {
 
 	}
 
+	/* add entity to EntityManager */
 	public inline function add( _entity:Entity ) : Void {
 
 		_verbose('add entity ${_entity.name}');
@@ -32,26 +33,59 @@ class EntityManager {
 
 		entities.set( _entity.name, _entity );
 
+		listenEntitySignals(_entity);
+
 		if(_entity.componentsCount > 0){
 			Clay.views.check(_entity);
 		}
 		
 	}
 
+	/* remove entity from EntityManager */
 	public inline function remove( _entity:Entity ) : Void {
 
 		_verbose('remove entity ${_entity.name}');
+
+		unlistenEntitySignals(_entity);
 
 		entities.remove( _entity.name );
 
 		Clay.views.removeEntity(_entity);
 
 	}
-	
+
+	/* get entity from EntityManager */
 	public inline function get<T:(Entity)>(_name:String) : T { // todo
 
 		return cast entities.get(_name);
 
+	}
+
+	function listenEntitySignals(_entity:Entity) {
+
+		_entity.componentAdded.connect(componentAdded);
+		_entity.entityDestroyed.connect(entityDestroyed);
+
+	}
+
+	function unlistenEntitySignals(_entity:Entity) {
+
+		_entity.componentAdded.disconnect(componentAdded);
+		_entity.entityDestroyed.disconnect(entityDestroyed);
+
+	}
+
+
+// entity signals
+
+	function componentAdded(_entity:Entity, _component:Dynamic, _componentClass:Class<Dynamic>){
+
+		Clay.views.check(_entity);
+	    
+	}
+
+	function entityDestroyed(_entity:Entity){
+	    
 	}
 
 	@:noCompletion public inline function iterator():Iterator<Entity> {

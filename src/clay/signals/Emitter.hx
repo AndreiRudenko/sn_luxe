@@ -1,6 +1,10 @@
-package clay;
+package clay.signals;
 
 import haxe.ds.IntMap;
+
+import clay.structural.Dll;
+import clay.structural.Oll;
+
 import clay.utils.Log._debug;
 import clay.utils.Log._verbose;
 import clay.utils.Log._verboser;
@@ -8,7 +12,7 @@ import clay.utils.Log.log;
 
 
 @:noCompletion typedef EmitHandler = Dynamic->Void;
-@:noCompletion typedef HandlerList = Array<EmitHandler>;
+@:noCompletion typedef HandlerList = Oll<EmitHandler>;
 
 @:noCompletion private typedef EmitNode<T> = { event : T, handler:EmitHandler #if clay_emitter_pos, ?pos:haxe.PosInfos #end }
 
@@ -22,30 +26,31 @@ class Emitter<ET:Int> {
 	@:noCompletion public var bindings : IntMap<HandlerList>;
 
 		//store connections loosely, to find connected locations
-	var connected : List< EmitNode<ET> >;
+	var connected : Dll< EmitNode<ET> >;
 		//store the items to remove
-	var _to_remove : List< EmitNode<ET> >;
+	var _to_remove : Dll< EmitNode<ET> >;
 
 		/** create a new emitter instance, for binding functions easily to named events. similar to `Events` */
 	public function new() {
 
-		_to_remove = new List();
-		connected = new List();
+		_to_remove = new Dll();
+		connected = new Dll();
 
 		bindings = new IntMap<HandlerList>();
 
 	} //new
 
 	@:noCompletion public function _emitter_destroy() {
+
 		while(_to_remove.length > 0) {
-			var _node = _to_remove.pop();
+			var _node = _to_remove.remFirst();
 			_node.event = null;
 			_node.handler = null;
 			_node = null;
 		}
 
 		while(connected.length > 0) {
-			var _node = connected.pop();
+			var _node = connected.remFirst();
 			_node.event = null;
 			_node.handler = null;
 			_node = null;
@@ -54,6 +59,7 @@ class Emitter<ET:Int> {
 		_to_remove = null;
 		connected = null;
 		bindings = null;
+		
 	}
 
 		/** Emit a named event */
@@ -84,7 +90,7 @@ class Emitter<ET:Int> {
 
 		/** connect a named event to a handler */
 	// @:generic
-	@:noCompletion public function on<T>(event:ET, handler: T->Void #if clay_emitter_pos, ?pos:haxe.PosInfos #end ) {
+	@:noCompletion public function on<T>(event:ET, handler: T->Void, order:Int = 0 #if clay_emitter_pos, ?pos:haxe.PosInfos #end ) {
 
 		if(bindings == null) return;
 
@@ -94,14 +100,16 @@ class Emitter<ET:Int> {
 
 		if(!bindings.exists(event)) {
 
-			bindings.set(event, [handler]);
-			connected.push({ handler:handler, event:event #if clay_emitter_pos, pos:pos #end });
+			var oll:Oll<EmitHandler> = new Oll();
+			oll.add(handler, order);
+			bindings.set(event, oll);
+			connected.addFirst({ handler:handler, event:event #if clay_emitter_pos, pos:pos #end });
 
 		} else {
 			var _list = bindings.get(event);
-			if(_list.indexOf(handler) == -1) {
-				_list.push(handler);
-				connected.push({ handler:handler, event:event #if clay_emitter_pos, pos:pos #end });
+			if(!_list.exists(handler)){
+				_list.add(handler, order);
+				connected.addFirst({ handler:handler, event:event });
 			}
 		}
 
@@ -121,12 +129,15 @@ class Emitter<ET:Int> {
 
 			#if clay_emitter_pos _verbose('off / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
 
-			_to_remove.push({ event:event, handler:handler });
+			_to_remove.addFirst({ event:event, handler:handler });
 
-			for(_info in connected) {
-				if(_info.event == event && _info.handler == handler) {
-					connected.remove(_info);
+			var node = connected.head;
+			while(node != null) {
+				if(node.value.event == event && node.value.handler == handler) {
+					connected.removeNode(node);
+					break;
 				}
+				node = node.next;
 			}
 
 				//debateable :p
@@ -137,6 +148,26 @@ class Emitter<ET:Int> {
 		return _success;
 
 	} //off
+
+	@:noCompletion public function update<T>(event:ET, handler: T->Void, order:Int #if clay_emitter_pos, ?pos:haxe.PosInfos #end ) : Bool {
+
+		var _list = bindings.get(event);
+		if(_list != null){
+			var _obj = _list.getNode(handler);
+			if(_obj != null){
+
+				#if clay_emitter_pos _verbose('update / $event / ${pos.fileName}:${pos.lineNumber}@${pos.className}.${pos.methodName}'); #end
+
+				_list.updateNode(_obj, order);
+				
+				return true;
+			}
+		}
+
+		return false;
+
+	}
+
 
 	@:noCompletion public function connections( handler:EmitHandler ) {
 
@@ -166,20 +197,20 @@ class Emitter<ET:Int> {
 
 		if(_to_remove.length > 0) {
 
-			for(_node in _to_remove) {
 
-				var _list = bindings.get(_node.event);
-				_list.remove( _node.handler );
+			var node = _to_remove.head;
+			while(node != null) {
+				var _list = bindings.get(node.value.event);
+				_list.remove( node.value.handler );
 
 					//clear the event list if there are no bindings
 				if(_list.length == 0) {
-					bindings.remove(_node.event);
+					bindings.remove(node.value.event);
 				}
+				node = node.next;
+			}
 
-			} //each node
-
-			_to_remove = null;
-			_to_remove = new List();
+			_to_remove.clear();
 
 		} //_to_remove length > 0
 

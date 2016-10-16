@@ -106,7 +106,7 @@ import haxe.macro.Type;
 					switch(f.expr.expr) {
 						default:
 						case EBlock(exprs):
-							exprs.push( Context.parse('Clay.systems.on( clay.Ev.${_event_name}, ${"_" + _event_name}, this )', _field.pos) );
+							exprs.push( Context.parse('Clay.engine.on( clay.Ev.${_event_name}, ${"_" + _event_name}, this.priority )', _field.pos) );
 					} //switch exp
 			} //switch kind
 
@@ -117,7 +117,7 @@ import haxe.macro.Type;
 					switch(f.expr.expr) {
 						default:
 						case EBlock(exprs):
-							exprs.push( Context.parse('Clay.systems.off( clay.Ev.${_event_name}, ${"_" + _event_name} )', _field.pos) );
+							exprs.push( Context.parse('Clay.engine.off( clay.Ev.${_event_name}, ${"_" + _event_name} )', _field.pos) );
 					} //switch exp
 			} //switch kind
 
