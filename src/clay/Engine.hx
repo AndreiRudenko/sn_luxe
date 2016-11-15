@@ -1,12 +1,10 @@
 package clay;
 
 import clay.signals.Emitter;
-import clay.Events;
+import clay.signals.Events;
 import clay.EntityManager;
 import clay.SystemManager;
 import clay.ViewManager;
-import clay.signals.Signal0;
-import clay.signals.Signal1;
 
 
 @:keep
@@ -68,7 +66,7 @@ class Engine {
 	}
 
 	public inline function updateOrder<T>(event:clay.Ev, handler:T->Void, order:Int) {
-		return emitter.update(event, handler, order);
+		return emitter.updateOrder(event, handler, order);
 	}
 
 

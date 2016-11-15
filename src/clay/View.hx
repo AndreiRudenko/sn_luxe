@@ -3,9 +3,11 @@ package clay;
 
 import clay.Entity;
 import clay.utils.Log.*;
+import clay.signals.Signal1;
 
 
 class View {
+
 
 
 	public var name(get, set): String;
@@ -13,18 +15,21 @@ class View {
 	public var entities(default, null):Map<String, Entity>;
 	public var viewClasses (default, null) : ViewClasses;
 
-	public var onAdded:Entity->Void;
-	public var onRemoved:Entity->Void;
+	public var onadded:Signal1<Entity>;
+	public var onremoved:Signal1<Entity>;
 
 
-	public function new( _viewName:String, _viewClasses:Array<Class<Dynamic>> ) {
+	public function new( _viewName:String, _viewClasses:Array<Class<Dynamic>>, _excludeClasses:Array<Class<Dynamic>> = null ) {
 
 		_verbose('creating new view / ${_viewName}');
 
 		_name = _viewName;
 
+		onadded = new Signal1();
+		onremoved = new Signal1();
+
 		entities = new Map();
-		viewClasses = new ViewClasses(this, _viewClasses);
+		viewClasses = new ViewClasses(this, _viewClasses, _excludeClasses);
 
 	}
 
@@ -38,21 +43,30 @@ class View {
 
 		entities = null;
 		viewClasses = null;
-		
+
+		_name = null;
+
+		onadded.destroy();
+		onremoved.destroy();
+
+		onadded = null;
+		onremoved = null;
+
 	}
 
-	public function check(_entity:Entity) {
+	@:allow(clay.ViewManager)
+	function check(_entity:Entity) {
 
 		_verbose('${_name} / check entity ${_entity.name}');
 
 		if(entities.exists(_entity.name) && !viewClasses.matchEntity(_entity)){
-			removeEntity(_entity);
+			_remove(_entity);
 			return;
 		}
 
 		// add new
 		if(!entities.exists(_entity.name) && viewClasses.matchEntity(_entity)){
-			addEntity(_entity);
+			_add(_entity);
 		}
 
 	}
@@ -65,21 +79,39 @@ class View {
 		// check and clear
 		for (e in entities) {
 			if(entities.exists(e.name) && !viewClasses.matchEntity(e)){
-				removeEntity(e);
+				_remove(e);
 			}
 		}
 
 		// check and add from engine
 		for (e in Clay.entities) {
 			if(!entities.exists(e.name) && viewClasses.matchEntity(e)){
-				addEntity(e);
+				_add(e);
 			}
 		}
 
 	}
 
+	// manually add entity
+	public inline function add(_entity:Entity){
+
+	    if(!entities.exists(_entity.name)){
+			_add(_entity);
+		}
+
+	}
+
+	// manually remove entity
+	public inline function remove(_entity:Entity){
+
+		if(entities.exists(_entity.name)){
+			_remove(_entity);
+		}
+
+	}
+
 	@:allow(clay.ViewManager)
-	inline function addEntity(_entity:Entity) {
+	inline function _add(_entity:Entity) {
 
 		_verbose('${_name} / add entity ${_entity.name}');
 
@@ -87,20 +119,16 @@ class View {
 
 		listenEnitityEvents(_entity);
 
-		if(onAdded != null){
-			onAdded(_entity);
-		}
+		onadded.send(_entity);
 
 	}
 
 	@:allow(clay.ViewManager)
-	inline function removeEntity(_entity:Entity) {
+	inline function _remove(_entity:Entity) {
 
 		_verbose('${_name} / remove entity');
-
-		if(onRemoved != null){
-			onRemoved(_entity);
-		}
+		
+		onremoved.send(_entity);
 
 		unlistenEnitityEvents(_entity);
 
@@ -113,7 +141,7 @@ class View {
 		_verbose('${_name} / remove all entities');
 
 		for (e in entities) {
-			removeEntity(e);
+			_remove(e);
 		}
 
 	}
@@ -123,6 +151,7 @@ class View {
 		_verbose('${_name} / listen entity events ${_entity.name}');
 
 		_entity.componentRemoved.connect(_componentRemoved);
+		_entity.entityRemoved.connect(_entityRemoved);
 
 	}
 
@@ -131,6 +160,7 @@ class View {
 		_verbose('${_name} / unlisten entity events ${_entity.name}');
 
 		_entity.componentRemoved.disconnect(_componentRemoved);
+		_entity.entityRemoved.disconnect(_entityRemoved);
 
 	}
 
@@ -140,8 +170,16 @@ class View {
 
 			_verbose('${_name} / on component removed ${_componentClass}');
 
-			removeEntity(_entity);
+			_remove(_entity);
 		}
+
+	}
+
+	function _entityRemoved(_entity:Entity) {
+
+		_verbose('${_name} / on entity removed ${_entity.name}');
+
+		_remove(_entity);
 
 	}
 
@@ -157,7 +195,7 @@ class View {
 
 		Clay.engine.views.remove(this);
 		_name = value;
-		Clay.engine.views.add(this);
+		Clay.engine.views._add(this);
 		
 		return value;
 
@@ -173,14 +211,15 @@ class View {
 }
 
 
-class ViewClasses {
+private class ViewClasses {
 
 
 	var classes : Array<Class<Dynamic>>;
+	var excludeClasses : Array<Class<Dynamic>>;
 	var view : View;
 
 
-	public function new(_view:View, _viewClasses:Array<Class<Dynamic>>){
+	public function new(_view:View, _viewClasses:Array<Class<Dynamic>>, _excludeClasses:Array<Class<Dynamic>>){
 		_verbose('create new ViewClasses ${_viewClasses}');
 
 		view = _view;
@@ -191,14 +230,20 @@ class ViewClasses {
 			classes = [];
 		}
 
+		if(_excludeClasses != null){
+			excludeClasses = _excludeClasses;
+		} else {
+			excludeClasses = [];
+		}
+
 	}
 
 	public function destroy(){
 
 		_verbose('destroy');
 
-	    classes = null;
-	    view = null;
+		classes = null;
+		view = null;
 
 	}
 
@@ -258,6 +303,12 @@ class ViewClasses {
 
 		_verbose('matchEntity ${_entity.name}');
 
+		for (c in excludeClasses) {
+			if(_entity.has(c)) {
+				return false;
+			}
+		}
+
 		for (c in classes) {
 			if(!_entity.has(c)) {
 				return false;
@@ -273,6 +324,13 @@ class ViewClasses {
 		_verbose('matchEntity ${Type.getClassName(Type.getClass(_component))}');
 
 		var _componentClass = Type.getClass(_component);
+
+		for (c in excludeClasses) {
+			if(_componentClass == c){
+				return false;
+			}
+		}
+
 		for (c in classes) {
 			if(_componentClass == c){
 				return true;
@@ -286,6 +344,12 @@ class ViewClasses {
 	public function matchClass(_componentClass:Class<Dynamic>):Bool {
 
 		_verbose('matchEntity ${Type.getClassName(_componentClass)}');
+		
+		for (c in excludeClasses) {
+			if(_componentClass == c){
+				return false;
+			}
+		}
 
 		for (c in classes) {
 			if(_componentClass == c){

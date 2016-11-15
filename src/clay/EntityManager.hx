@@ -46,11 +46,11 @@ class EntityManager {
 
 		_verbose('remove entity ${_entity.name}');
 
+		_entity.entityRemoved.send(_entity);
+
 		unlistenEntitySignals(_entity);
 
 		entities.remove( _entity.name );
-
-		Clay.views.removeEntity(_entity);
 
 	}
 
@@ -61,17 +61,28 @@ class EntityManager {
 
 	}
 
+	/* destroy EntityManager */
+	@:noCompletion public function destroy() {
+
+		_verbose('destroy EntityManager');
+		
+		for (e in entities) {
+			e.destroy();
+		}
+
+		entities = null;
+		
+	}
+
 	function listenEntitySignals(_entity:Entity) {
 
 		_entity.componentAdded.connect(componentAdded);
-		_entity.entityDestroyed.connect(entityDestroyed);
 
 	}
 
 	function unlistenEntitySignals(_entity:Entity) {
 
 		_entity.componentAdded.disconnect(componentAdded);
-		_entity.entityDestroyed.disconnect(entityDestroyed);
 
 	}
 
@@ -81,10 +92,6 @@ class EntityManager {
 	function componentAdded(_entity:Entity, _component:Dynamic, _componentClass:Class<Dynamic>){
 
 		Clay.views.check(_entity);
-	    
-	}
-
-	function entityDestroyed(_entity:Entity){
 	    
 	}
 

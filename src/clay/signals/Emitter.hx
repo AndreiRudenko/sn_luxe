@@ -149,7 +149,7 @@ class Emitter<ET:Int> {
 
 	} //off
 
-	@:noCompletion public function update<T>(event:ET, handler: T->Void, order:Int #if clay_emitter_pos, ?pos:haxe.PosInfos #end ) : Bool {
+	@:noCompletion public function updateOrder<T>(event:ET, handler: T->Void, order:Int #if clay_emitter_pos, ?pos:haxe.PosInfos #end ) : Bool {
 
 		var _list = bindings.get(event);
 		if(_list != null){
@@ -200,13 +200,20 @@ class Emitter<ET:Int> {
 
 			var node = _to_remove.head;
 			while(node != null) {
+				
 				var _list = bindings.get(node.value.event);
-				_list.remove( node.value.handler );
+                    //since bindings.remove removes all the events of this type,
+                    //it means subsequent similar types are still in the list and
+                    //would attempt to touch the null result, so we don't allow it
+				if(_list != null){
 
-					//clear the event list if there are no bindings
-				if(_list.length == 0) {
-					bindings.remove(node.value.event);
+					_list.remove( node.value.handler );
+
+					if(_list.length == 0) {
+						bindings.remove(node.value.event);
+					}
 				}
+
 				node = node.next;
 			}
 

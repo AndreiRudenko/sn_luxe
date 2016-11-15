@@ -1,6 +1,7 @@
 ## clay
-entity component system written in haxe, inspired by many libraries / engines [eskimo](https://github.com/PDeveloper/eskimo), [ash](https://github.com/nadako/Ash-Haxe), [tusk](https://github.com/BlazingMammothGames/tusk), [luxe](https://github.com/underscorediscovery/luxe).
+entity component system written in haxe, inspired by many libraries / engines [eskimo](https://github.com/PDeveloper/eskimo), [ash](https://github.com/nadako/Ash-Haxe), [ecx](https://github.com/eliasku/ecx), [luxe](https://github.com/underscorediscovery/luxe).
 
+![clay](clay.png)  
 
 ## example
 ```haxe
@@ -48,7 +49,7 @@ class SystemA extends System{
 
 	}
 
-	override public function onUpdate(dt:Float){
+	override public function update(dt:Float){
 
 		for (entity in entsA.entities) {
 

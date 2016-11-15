@@ -22,17 +22,13 @@ class ViewManager {
 
 	public inline function add( _view:View ) : Void {
 
-		_verbose('add view ${_view.name}');
+		_add(_view);
 
-		var _dView:View = views.get(_view.name);
-		if(_dView != null) {
-			log('adding a second view named ${_view.name}!
-				This will replace the existing one, possibly leaving the previous one in limbo.');
-			remove(_dView);
+		// check if entities added before view
+		for (e in Clay.entities) {
+			_view.check(e);
 		}
 
-		views.set( _view.name, _view );
-		
 	}
 
 	public inline function remove( _view:View ) : Void {
@@ -58,15 +54,54 @@ class ViewManager {
 		}
 
 	}
+	
+	public inline function checkAll() {
+
+		_verbose('check all entities');
+
+		for (e in Clay.entities) {
+			check(e);
+		}
+
+	}
 
 	public inline function removeEntity(_entity:Entity) {
 
 		_verbose('remove entity ${_entity.name}');
 
 		for (v in views) {
-			v.removeEntity(_entity);
+			v._remove(_entity);
 		}
 
+	}
+
+	@:allow(clay.View)
+	inline function _add( _view:View ) : Void {
+
+		_verbose('add view ${_view.name}');
+
+		var _dView:View = views.get(_view.name);
+		if(_dView != null) {
+			log('adding a second view named ${_view.name}!
+				This will replace the existing one, possibly leaving the previous one in limbo.');
+			remove(_dView);
+		}
+
+		views.set( _view.name, _view );
+
+	}
+
+	/* destroy ViewManager */
+	@:noCompletion public function destroy() {
+
+		_verbose('destroy ViewManager');
+		
+		for (v in views) {
+			v.destroy();
+		}
+
+		views = null;
+		
 	}
 
 	function toString() {

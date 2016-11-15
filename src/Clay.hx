@@ -2,7 +2,7 @@ package ;
 
 
 import clay.Engine;
-import clay.Events;
+import clay.signals.Events;
 import clay.EntityManager;
 import clay.SystemManager;
 import clay.ViewManager;

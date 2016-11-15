@@ -224,6 +224,20 @@ class Dll<T> {
 		
 	}
 
+	public inline function toArray():Array<T>{
+
+		var ret:Array<T> = [];
+
+		var node = head;
+		while (node != null){
+			ret.push(node.value);
+			node = node.next;
+		}
+		
+		return ret;
+
+	}
+	
 	inline function getNodeFromPool(_value:T):DllNode<T> {
 
 		var node:DllNode<T> = null;

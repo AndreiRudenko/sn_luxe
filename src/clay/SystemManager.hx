@@ -20,17 +20,6 @@ class SystemManager {
 
 	}
 
-	/* destroy SystemManager */
-	public function destroy() {
-
-		_verbose('destroy SystemManager');
-
-		empty();
-
-		systemList = null;
-
-	}
-
 	/* add system to SystemManager */
 	public inline function add(_system:System, ?_priority:Int) {
 
@@ -95,9 +84,10 @@ class SystemManager {
 
 	}
 
+
 	/* update system priority */
 	@:allow(clay.System)
-	inline function update(_system:System) {
+	inline function updatePriority(_system:System) {
 
 
 		if(systemList.exists(Type.getClass(_system))){ // do i need checking ?
@@ -105,7 +95,8 @@ class SystemManager {
 
 			_system._unlistenEmitter();
 
-			systemList.update(_system);
+			systemList.remove(_system);
+			systemList.add(_system);
 
 			_system._listenEmitter();
 		} else {
@@ -113,6 +104,17 @@ class SystemManager {
 
 		}
 
+
+	}
+
+	/* destroy SystemManager */
+	@:noCompletion public function destroy() {
+
+		_verbose('destroy SystemManager');
+
+		empty();
+
+		systemList = null;
 
 	}
 

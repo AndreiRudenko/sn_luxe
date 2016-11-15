@@ -1,4 +1,4 @@
-package clay;
+package clay.signals;
 
 // taken from https://github.com/underscorediscovery/luxe
 

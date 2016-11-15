@@ -123,7 +123,7 @@ class ClassList {
 
 	}
 
-	public inline function clear(gc:Bool = true){
+	public inline function clear(){
 
 		var node = head;
 		var next = null;

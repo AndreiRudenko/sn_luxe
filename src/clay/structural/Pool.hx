@@ -39,7 +39,6 @@ class Pool<T> {
 
 		if(size > 0 && (items.length < size)) {
 			items.push(item);
-		} else {
 		}
 
 	}

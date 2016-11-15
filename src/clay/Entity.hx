@@ -4,6 +4,7 @@ package clay;
 import clay.structural.ClassList;
 import clay.signals.Signal3;
 import clay.signals.Signal1;
+import clay.View;
 import clay.utils.Log.*;
 
 
@@ -11,6 +12,9 @@ class Entity {
 	
 
 	public var active : Bool = true;
+
+	public var no_view : Bool;
+	public var destroyed : Bool = false;
 
 	public var id (default, null) : String;
 	public var name (get, set) : String;
@@ -29,13 +33,16 @@ class Entity {
 	@:allow(clay.EntityManager)
 	var componentRemoved : Signal3<Entity, Dynamic, Class<Dynamic>>;
 
+	@:allow(clay.View)
 	@:allow(clay.EntityManager)
-	var entityDestroyed : Signal1<Entity>;
+	var entityRemoved : Signal1<Entity>;
 
 
-	public function new( _entname:String = 'entity', _aComponents:Array<Dynamic> = null, name_unique:Bool = true) {
+	public function new( _entname:String = 'entity', _aComponents:Array<Dynamic> = null, name_unique:Bool = true, _no_view:Bool = false) {
 
 		_name = _entname;
+		
+		no_view = _no_view;
 
 		id = clay.utils.Id.uniqueid();
 
@@ -47,11 +54,13 @@ class Entity {
 
 		componentAdded = new Signal3();
 		componentRemoved = new Signal3();
-		entityDestroyed = new Signal1();
+		entityRemoved = new Signal1();
 
 		_components = new ClassList();
 
-		Clay.entities.add(this);
+		if(!no_view){
+			Clay.entities.add(this);
+		}
 
 		if(_aComponents != null){
 			addMany(_aComponents);
@@ -60,26 +69,30 @@ class Entity {
 	}
 
 	/**
-	 * destroy this entity. removes it from the scene if any
+	 * destroy this entity.
 	 */
-	
 	public function destroy() {
 
 		_verbose('destroy entity / ${_name}');
 
-		entityDestroyed.send(this);
+		// entityRemoved.send(this);
+		
+		destroyed = true;
 
-		clear();
+		// clear(); // no need
+		if(!no_view){
+			Clay.entities.remove(this);
+		}
 
-		Clay.entities.remove(this);
+		_components.clear();
 
 		_components = null;
 
-		entityDestroyed.destroy();
+		entityRemoved.destroy();
 		componentAdded.destroy();
 		componentRemoved.destroy();
 
-		entityDestroyed = null;
+		entityRemoved = null;
 		componentAdded = null;
 		componentRemoved = null;
 
@@ -144,7 +157,7 @@ class Entity {
 	 * @return the component, or null if the component doesn't exist in the entity
 	 */
 	
-	inline public function remove<T>( _componentClass:Class<Dynamic> ) : T {
+	public inline function remove<T>( _componentClass:Class<Dynamic> ) : T {
 
 		_verbose('remove component ${_componentClass} / from ${_name}');
 
@@ -170,7 +183,7 @@ class Entity {
 	 * @param _componentClasses The array of component classes to be removed.
 	 */
 	
-	inline public function removeMany( _componentClasses:Array<Class<Dynamic>> ) {
+	public inline function removeMany( _componentClasses:Array<Class<Dynamic>> ) {
 
 		for (componentClass in _componentClasses) {
 			remove(componentClass);
@@ -185,7 +198,7 @@ class Entity {
 	 * @return The component, or null if none was found.
 	 */
 	
-	inline public function get<T>( _componentClass:Class<Dynamic> ) : T {
+	public inline function get<T>( _componentClass:Class<Dynamic> ) : T {
 
 		return _components.get( _componentClass );
 
@@ -198,7 +211,7 @@ class Entity {
 	 * @return The component, or null if none was found.
 	 */
 	
-	inline public function has<T>( _componentClass:Class<T> ) : Bool {
+	public inline function has<T>( _componentClass:Class<T> ) : Bool {
 
 		return _components.exists( _componentClass );
 
@@ -208,7 +221,7 @@ class Entity {
 	 * remove all _components from the entity
 	 */
 	
-	inline public function clear() {
+	public inline function clear() {
 
 		_verbose('remove all _components / from ${_name}');
 
@@ -238,12 +251,16 @@ class Entity {
 
 		_verbose('set name ${value}');
 
-		Clay.entities.remove(this);
+		if(!no_view){
+			Clay.entities.remove(this);
+		}
 
 		_name = value;
 
-		Clay.entities.add(this);
-		
+		if(!no_view){
+			Clay.entities.add(this);
+		}
+
 		return value;
 
 	}

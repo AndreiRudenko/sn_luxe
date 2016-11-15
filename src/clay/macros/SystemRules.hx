@@ -56,29 +56,9 @@ import haxe.macro.Type;
 			switch(_field.name) {
 
 				case
-					'onUpdate',
-					'onRender',
-					'onTouchMove',
-					'onTouchDown',
-					'onTouchUp',
-					'onMouseMove',
-					'onMouseDown',
-					'onMouseUp',
-					'onMouseWheel',
-					'onGamepadAxis',
-					'onGamepadUp',
-					'onGamepadDown',
-					'onGamepadDevice',
-					'onKeyDown',
-					'onKeyUp',
-					'onTextInput',
-					'onInputDown',
-					'onInputUp',
-					'onWindowMoved',
-					'onWindowResized',
-					'onWindowSized',
-					'onWindowMinimized',
-					'onWindowRestored' :
+					// you can add custom functions here, & in system class, to connect events
+					'update',
+					'onrender':
 				{
 					connect_event(_field);
 				}
@@ -97,7 +77,11 @@ import haxe.macro.Type;
 
 		if(_field.access.indexOf(AOverride) != -1) {
 
-			var _event_name : String = _field.name.substr(2).toLowerCase();
+			var _event_name : String = _field.name;
+
+			if(_event_name != 'update'){
+				_event_name = _event_name.substr(2).toLowerCase();
+			}
 
 				//inject the init connection
 			switch(_listenEmitter_field.kind) {
