@@ -45,9 +45,7 @@ class EntityManager {
 	public inline function remove( _entity:Entity ) : Void {
 
 		_verbose('remove entity ${_entity.name}');
-
-		_entity.entityRemoved.send(_entity);
-
+		
 		unlistenEntitySignals(_entity);
 
 		entities.remove( _entity.name );
@@ -73,6 +71,21 @@ class EntityManager {
 		entities = null;
 		
 	}
+
+	/* remove and destroy all entities */
+	public function clear() {
+
+		_verbose('destroy all entities');
+		
+		for (e in entities) {
+			e.destroy();
+		}
+
+		entities = null;
+		entities = new Map();
+
+	}
+
 
 	function listenEntitySignals(_entity:Entity) {
 

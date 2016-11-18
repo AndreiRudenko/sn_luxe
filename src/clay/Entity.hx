@@ -13,6 +13,7 @@ class Entity {
 
 	public var active : Bool = true;
 
+	// lock entity to view
 	public var no_view : Bool;
 	public var destroyed : Bool = false;
 
@@ -33,10 +34,6 @@ class Entity {
 	@:allow(clay.EntityManager)
 	var componentRemoved : Signal3<Entity, Dynamic, Class<Dynamic>>;
 
-	@:allow(clay.View)
-	@:allow(clay.EntityManager)
-	var entityRemoved : Signal1<Entity>;
-
 
 	public function new( _entname:String = 'entity', _aComponents:Array<Dynamic> = null, name_unique:Bool = true, _no_view:Bool = false) {
 
@@ -54,7 +51,6 @@ class Entity {
 
 		componentAdded = new Signal3();
 		componentRemoved = new Signal3();
-		entityRemoved = new Signal1();
 
 		_components = new ClassList();
 
@@ -74,25 +70,20 @@ class Entity {
 	public function destroy() {
 
 		_verbose('destroy entity / ${_name}');
-
-		// entityRemoved.send(this);
 		
 		destroyed = true;
 
-		// clear(); // no need
+		clear();
+
 		if(!no_view){
 			Clay.entities.remove(this);
 		}
 
-		_components.clear();
-
 		_components = null;
 
-		entityRemoved.destroy();
 		componentAdded.destroy();
 		componentRemoved.destroy();
 
-		entityRemoved = null;
 		componentAdded = null;
 		componentRemoved = null;
 

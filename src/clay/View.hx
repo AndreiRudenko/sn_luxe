@@ -151,7 +151,6 @@ class View {
 		_verbose('${_name} / listen entity events ${_entity.name}');
 
 		_entity.componentRemoved.connect(_componentRemoved);
-		_entity.entityRemoved.connect(_entityRemoved);
 
 	}
 
@@ -160,7 +159,6 @@ class View {
 		_verbose('${_name} / unlisten entity events ${_entity.name}');
 
 		_entity.componentRemoved.disconnect(_componentRemoved);
-		_entity.entityRemoved.disconnect(_entityRemoved);
 
 	}
 
@@ -172,14 +170,6 @@ class View {
 
 			_remove(_entity);
 		}
-
-	}
-
-	function _entityRemoved(_entity:Entity) {
-
-		_verbose('${_name} / on entity removed ${_entity.name}');
-
-		_remove(_entity);
 
 	}
 
