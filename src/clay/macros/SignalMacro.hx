@@ -46,11 +46,15 @@ class SignalMacro {
 				args: arguments,
 				ret: macro : Void,
 				expr: macro {
+
+					var f = null;
 					var node = signals.head;
 					while(node != null) {
-						node.value($a{callArgs});
+						f = node.value;
 						node = node.next;
+						f($a{callArgs});
 					}
+
 				},
 				params: [],
 			}),

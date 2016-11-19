@@ -13,7 +13,6 @@ class Entity {
 
 	public var active : Bool = true;
 
-	// lock entity to view
 	public var no_view : Bool;
 	public var destroyed : Bool = false;
 
