@@ -12,7 +12,11 @@ class Id {
 		// http://www.anotherchris.net/csharp/friendly-unique-id-generation-part-2/#base62
 
 		if(val == null) {
-			val = Std.random(0x7fffffff);
+			#if neko
+				val = Std.random(0x3fffffff);
+			#else
+				val = Std.random(0x7fffffff);
+			#end
 		}
 
 		function to_char(value:Int) : String {
