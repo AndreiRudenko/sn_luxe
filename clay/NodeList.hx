@@ -16,15 +16,17 @@ class NodeList<TNode:Node<TNode>> extends Objects {
 
 
     public var node_class (default, null) : Class<TNode>;
-    public var entities:Map<String, TNode>;
+    public var nodes:Map<String, TNode>;
     public var length (default, null) : Int = 0;
 
     @:noCompletion public var head(default, null):TNode;
     @:noCompletion public var tail(default, null):TNode;
 
+        /** for update debug view */
+    @:noCompletion public var _has_changed:Bool = true;
+
     var component_names:Array<String>;
     var node_pool:NodePool<TNode>;
-
 
         /** create new NodeList from node_class */
     public function new( _node_class:Class<TNode> ) {
@@ -33,7 +35,7 @@ class NodeList<TNode:Node<TNode>> extends Objects {
 
         node_class = _node_class;
 
-        entities = new Map();
+        nodes = new Map();
 
         #if cpp
             _name = Type.getClassName(node_class);
@@ -46,6 +48,11 @@ class NodeList<TNode:Node<TNode>> extends Objects {
         super(_name);
 
         node_pool = new NodePool<TNode>( node_class, component_names );
+        
+        var _view:clay.debug.NodesDebugView = Luxe.core.debug.get_view('Nodes');
+        if(_view != null) {
+            _view.add_nodelist(this);
+        }
 
     }
 
@@ -57,11 +64,17 @@ class NodeList<TNode:Node<TNode>> extends Objects {
         empty();
 
         node_class = null;
-        entities = null;
+        nodes = null;
         component_names = null;
 
         head = null;
         tail = null;
+
+        var _view:clay.debug.NodesDebugView = Luxe.core.debug.get_view('Nodes');
+        if(_view != null) {
+            _view.remove_nodelist(this);
+        }
+
     }
 
         /** add entity if match*/
@@ -84,15 +97,15 @@ class NodeList<TNode:Node<TNode>> extends Objects {
 
     inline function has_entity(_entity:Entity):Bool {
 
-        return entities.exists(_entity.name);
+        return nodes.exists(_entity.name);
 
     }
 
     public inline function empty() {
 
-        _debug('remove all entities and nodes');
+        _debug('remove all nodes and nodes');
 
-        for (node in entities) {
+        for (node in nodes) {
             _remove_entity(node.entity);
         }
 
@@ -143,7 +156,7 @@ class NodeList<TNode:Node<TNode>> extends Objects {
             Reflect.setField(node, n, _entity.get(n));
         }
 
-        entities.set(_entity.name, node);
+        nodes.set(_entity.name, node);
 
         // add to nodeList
         if (head == null) {
@@ -160,14 +173,16 @@ class NodeList<TNode:Node<TNode>> extends Objects {
 
         length++;
 
+        _has_changed = true;
+
     }
 
     inline function _remove_entity(_entity:Entity) {
 
         // _debug('"${node_class}" / remove entity: "${_entity.name}"');
 
-        var node:TNode = entities.get(_entity.name);
-        entities.remove(_entity.name);
+        var node:TNode = nodes.get(_entity.name);
+        nodes.remove(_entity.name);
 
         // remove from nodeList
         if (head == node){
@@ -188,6 +203,8 @@ class NodeList<TNode:Node<TNode>> extends Objects {
         node_pool.put(node);
 
         length--;
+
+        _has_changed = true;
         
     }
 
@@ -213,7 +230,7 @@ class NodeList<TNode:Node<TNode>> extends Objects {
 
     function toString() {
 
-        return 'NodeList: $name / ${Lambda.count(entities)} entities';
+        return 'NodeList: $name / ${Lambda.count(nodes)} nodes';
 
     }
 

@@ -29,6 +29,10 @@ class Main extends luxe.Game {
 
     override function ready() {
 
+        #if !no_debug_console
+            luxe.Debug.views.push(new clay.debug.NodesDebugView(Luxe.debug));
+        #end
+        
         systems = new clay.Systems();
         nodes = new clay.Nodes();
 

@@ -9,10 +9,8 @@ import clay.core.ClassList;
 @:access(clay.NodeList)
 class Nodes {
 
-        /** nodes list */
-    var nodes:ClassList<NodeList<Dynamic>>;
-        /** for update debug view */
-    var _has_changed:Bool = true;
+        /** node lists */
+    var node_lists:ClassList<NodeList<Dynamic>>;
 
     var _component_added_eid:String;
     var _component_removed_eid:String;
@@ -22,14 +20,14 @@ class Nodes {
         
         _debug('creating new Nodes');
 
-        nodes = new ClassList();
+        node_lists = new ClassList();
 
         _component_added_eid = Luxe.events.listen('component.added', component_added); // use emitter?
         _component_removed_eid = Luxe.events.listen('component.removed', component_removed);
 
     }
 
-        /** create and add node to nodes list */
+        /** create and add node to node_lists list */
     public function create<TNode:Node<TNode>>(_node_class:Class<TNode>):NodeList<TNode> {
 
         #if js
@@ -38,7 +36,7 @@ class Nodes {
             _debug('create NodeList: "${_node_class}"');
         #end
 
-        var _nodelist:NodeList<TNode> = cast nodes.get(_node_class);
+        var _nodelist:NodeList<TNode> = cast node_lists.get(_node_class);
 
         if(_nodelist == null) {
             _nodelist = new NodeList(_node_class);
@@ -49,7 +47,7 @@ class Nodes {
 
     }
 
-        /** add node to nodes list */
+        /** add node to node_lists list */
     public function add<TNode:Node<TNode>>(_nodelist:NodeList<TNode>):NodeList<TNode> {
 
         #if js
@@ -58,26 +56,24 @@ class Nodes {
             _debug('add NodeList: "${_nodelist.node_class}"');
         #end
 
-        nodes.add(_nodelist.node_class, _nodelist);
+        node_lists.add(_nodelist.node_class, _nodelist);
 
         // for (e in Luxe.scene.entities) {
         //  _nodelist.add(e);
         // }
 
-        _has_changed = true;
-
         return _nodelist;
 
     }
 
-        /** get node from nodes list */
+        /** get node from node_lists list */
     public inline function get<TNode:Node<TNode>>(_node_class:Class<TNode>):NodeList<TNode> {
 
-        return cast nodes.get(_node_class);
+        return cast node_lists.get(_node_class);
 
     }
 
-        /** remove node from nodes list */
+        /** remove node from node_lists list */
     public function remove<TNode:Node<TNode>>(_node_class:Class<TNode>):NodeList<TNode> {
 
         #if js
@@ -86,24 +82,22 @@ class Nodes {
             _debug('remove NodeList: "${_node_class}"');
         #end
 
-        var _nodelist:NodeList<TNode> = cast nodes.get(_node_class);
+        var _nodelist:NodeList<TNode> = cast node_lists.get(_node_class);
         if(_nodelist != null) {
             _nodelist.empty();
-            nodes.remove(_node_class);
+            node_lists.remove(_node_class);
         }
         
-        _has_changed = true;
-
         return _nodelist;
 
     }
 
-        /** remove all from nodes list */
+        /** remove all from node_lists list */
     public function empty() {
 
-        _debug('remove all entities and nodes');
+        _debug('remove all entities and node_lists');
 
-        var node = nodes.head;
+        var node = node_lists.head;
         while(node != null) {
             node.object.empty();
             node = node.next;
@@ -121,7 +115,7 @@ class Nodes {
         Luxe.events.unlisten(_component_added_eid);
         Luxe.events.unlisten(_component_removed_eid);
 
-        nodes = null;
+        node_lists = null;
 
     }
 
@@ -130,7 +124,7 @@ class Nodes {
         var entity = _event.entity;
         var component_name = _event.component.name;
 
-        var node = nodes.head;
+        var node = node_lists.head;
         while(node != null) {
             node.object.component_added(entity, component_name);
             node = node.next;
@@ -143,7 +137,7 @@ class Nodes {
         var entity = _event.entity;
         var component_name = _event.component.name;
 
-        var node = nodes.head;
+        var node = node_lists.head;
         while(node != null) {
             node.object.component_removed(entity, component_name);
             node = node.next;
@@ -155,7 +149,7 @@ class Nodes {
 
         var _list = []; 
 
-        var node = nodes.head;
+        var node = node_lists.head;
         while (node != null){
 
             #if js
@@ -167,7 +161,7 @@ class Nodes {
             node = node.next;
         }
 
-        return 'nodes: [${_list.join(", ")}]';
+        return 'node_lists: [${_list.join(", ")}]';
 
     }
 

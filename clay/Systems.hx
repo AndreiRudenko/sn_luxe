@@ -233,6 +233,9 @@ class Systems {
     } //reset
 
     function update(dt:Float) {
+
+        #if !luxe_noprofile Luxe.debug.start(Tag.systems_update); #end
+
         if(active_count > 0) {
             var node = active_systems.head;
             var _system = null;
@@ -243,6 +246,9 @@ class Systems {
                 _system.update(dt);
             }
         }
+
+        #if !luxe_noprofile Luxe.debug.end(Tag.systems_update); #end
+
     } //update
 
     function ondestroy(_) {
@@ -553,3 +559,11 @@ class Systems {
 
 }
 
+@:noCompletion
+@:allow(clay.Systems)
+class Tag {
+    static var systems_update           = 'clay.systems.update';
+    static var systems_render           = 'clay.systems.render';
+    static var systems_prerender        = 'clay.systems.prerender';
+    static var systems_postrender       = 'clay.systems.postrender';
+}
