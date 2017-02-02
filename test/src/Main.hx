@@ -1,16 +1,4 @@
-## clay  
-ECS systems and nodes for [luxe](https://github.com/underscorediscovery/luxe)
 
-![clay](clay.png)  
-
-## example  
-See src/Main.hx
-
-Be sure to read about ecs  
-http://entity-systems.wikidot.com/  
-http://www.ashframework.org/  
-
-```haxe
 
 import luxe.Entity;
 import luxe.Component;
@@ -24,6 +12,17 @@ import clay.System;
 
 
 class Main extends luxe.Game {
+
+    override function config(config:GameConfig) {
+
+        config.window.title = 'luxe game';
+        config.window.width = 960;
+        config.window.height = 640;
+        config.window.fullscreen = false;
+
+        return config;
+
+    } //config
 
     public static var systems:clay.Systems;
     public static var nodes:clay.Nodes;
@@ -50,7 +49,16 @@ class Main extends luxe.Game {
 
     } //ready
 
+    override function onkeyup(event:KeyEvent) {
+
+        if(event.keycode == Key.escape) {
+            Luxe.shutdown();
+        }
+
+    } //onkeyup
+
 } //Main
+
 
 class ComponentA extends Component {
 
@@ -71,6 +79,7 @@ class ComponentA extends Component {
 
 } //ComponentA
 
+
 class ComponentB extends Component {
 
     public var number:Float;
@@ -90,16 +99,20 @@ class ComponentB extends Component {
 
 } //ComponentB
 
+
+
 class NodeA extends Node<NodeA> {
     public var compA:ComponentA;
     public var compB:ComponentB;
 } //NodeA
+
 
 class NodeB extends Node<NodeB> {
     public var compA:ComponentA;
     public var compA2:ComponentA;
     public var compB:ComponentB;
 } //NodeB
+
 
 class SystemA extends System {
 
@@ -133,6 +146,7 @@ class SystemA extends System {
 
 
 } //SystemA
+
 
 class SystemB extends System {
 
@@ -172,6 +186,3 @@ class SystemB extends System {
 
 
 } //SystemB
-
-```
-
